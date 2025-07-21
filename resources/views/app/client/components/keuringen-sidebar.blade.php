@@ -1,0 +1,44 @@
+<div class="col-lg-4">
+    <!-- File Info Section -->
+    <div class="card shadow-sm mb-4 sticky-top" style="top: 1rem;">
+        <div class="card-header bg-white py-3">
+            <h5 class="card-title mb-0">
+                <i class="ri-folder-line me-2"></i>Dossiergegevens
+            </h5>
+        </div>
+
+        <div class="card-body">
+            <div class="row g-3">
+                @if ($isEdit && $keuringen)
+                    <div class="col-12">
+                        <label class="form-label">Dossiernummer</label>
+                        <input type="text" name="data[file_id]" class="form-control" readonly
+                            value="{{ $keuringen->file_id }}">
+                    </div>
+                @endif
+                <div class="col-12">
+                    <label class="form-label">Files</label>
+                    <input type="file" name="docs[]" class="form-control" multiple>
+                </div>
+                
+            </div>
+        </div>
+        <div class="card-footer bg-white">
+            <div class="d-flex gap-2 justify-content-end">
+                <button class="btn btn-success btn-sm px-3 py-2 d-flex align-items-center" type="submit">
+                    <i class="ri-save-line me-2"></i>
+                    <span>Opslaan</span>
+                </button>
+                <div class="vr"></div>
+                @if (!$isEdit)
+                    <button class="btn btn-primary btn-sm px-3 py-2 d-flex align-items-center" type="submit"
+                        name="to-detail" data-bs-toggle="tooltip" data-bs-placement="top"
+                        title="Opslaan en detailleren">
+                        <i class="ri-file-list-3-line me-2"></i>
+                        <span>Opslaan & Details</span>
+                    </button>
+                @endif
+            </div>
+        </div>
+    </div>
+</div>

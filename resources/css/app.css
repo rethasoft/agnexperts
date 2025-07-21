@@ -1,0 +1,5 @@
+.required:after {
+    content: ' *';
+    color: #dc3545;  /* Bootstrap danger color */
+    margin-left: 3px;
+}

@@ -1,0 +1,588 @@
+:root {
+    --secondary-color: #6c757d;
+    --success-color: #198754;
+}
+
+body {
+    background-color: #f8f9fa;
+}
+
+#order-section{
+    margin: 150px 0 75px;
+}
+.main-container {
+    max-width: 1140px;
+    margin: 10rem auto 2rem;
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.05);
+    padding: 2rem;
+}
+
+.progress {
+    height: 0.5rem;
+    border-radius: 1rem;
+    background-color: rgba(62, 88, 121, 0.1);
+}
+
+.progress-bar {
+    transition: width 0.6s ease;
+}
+
+.step-header {
+    position: relative;
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.step-header:after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(to right, var(--it-theme-1) 50%, transparent 50%);
+}
+
+.service-card {
+    background: white;
+    border: 2px solid #e9ecef;
+    border-radius: 12px;
+    padding: 1.25rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    cursor: pointer;
+    height: 100%;
+}
+
+.service-card:hover {
+    border-color: var(--it-theme-1);
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+.service-card.active {
+    border-color: #52ff00;
+}
+
+.service-card.selected {
+    background-color: var(--it-theme-1);
+    border-color: var(--it-theme-1);
+    color: white;
+}
+
+.service-card.selected i,
+.service-card.selected .form-check-label {
+    color: white;
+}
+
+.service-card input[type="radio"],
+.service-card input[type="checkbox"] {
+    display: none;
+}
+
+.service-card i {
+    font-size: 1.5rem;
+    margin-right: 1rem;
+    color: var(--it-theme-1);
+    transition: transform 0.3s ease;
+}
+
+.service-card:hover i {
+    transform: scale(1.1);
+}
+
+.service-card .form-check-label {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.summary-table {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.summary-header {
+    background-color: #f8f9fa;
+}
+
+.summary-header h6 {
+    font-size: 1.1rem;
+    color: var(--it-theme-1);
+}
+
+.table {
+    margin-bottom: 0;
+}
+
+.table> :not(caption)>*>* {
+    padding: 0.75rem 1rem;
+}
+
+.table thead th {
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e9ecef;
+    white-space: nowrap;
+}
+
+.service-row {
+    transition: background-color 0.2s ease;
+}
+
+.service-row:hover {
+    background-color: #f8f9fa;
+}
+
+.service-info {
+    max-width: 300px;
+}
+
+.service-icon {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(-it-theme-1);
+    border-radius: 8px;
+}
+
+.service-icon i {
+    font-size: 1rem;
+}
+
+.service-name {
+    font-weight: 500;
+    color: #2c3038;
+    font-size: 0.9375rem;
+}
+
+.quantity-control {
+    width: 96px;
+    height: 32px;
+    border: 1px solid #e9ecef;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    background: white;
+}
+
+.qty-btn {
+    width: 28px;
+    height: 28px;
+    border: none;
+    background: none;
+    color: #6c757d;
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    padding: 0;
+}
+
+.qty-btn:hover {
+    color: var(--it-theme-1);
+}
+
+.qty-input {
+    width: 40px;
+    border: none;
+    text-align: center;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: #2c3038;
+    padding: 0;
+    background: transparent;
+    -moz-appearance: textfield;
+}
+
+.qty-input::-webkit-inner-spin-button,
+.qty-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+.qty-input:focus {
+    outline: none;
+}
+
+.is-invalid {
+    border-color: #dc3545 !important;
+    box-shadow: 0 0 0 0.25rem rgba(220, 53, 69, 0.25);
+}
+
+.price,
+.total {
+    font-weight: 500;
+    color: #2c3038;
+    font-size: 0.9375rem;
+}
+
+.remove-btn {
+    width: 28px;
+    height: 28px;
+    min-width: 28px;
+    border: none;
+    background: none;
+    border-radius: 6px;
+    color: #dc3545;
+    transition: all 0.2s ease;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-btn:hover {
+    background-color: #fff5f5;
+    transform: scale(1.1);
+}
+
+.total-row {
+    background-color: #f8f9fa;
+}
+
+.nav-buttons {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid #e9ecef;
+}
+
+.btn {
+    padding: 0.75rem 1.5rem;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-light {
+    background-color: #f8f9fa;
+    border-color: #e9ecef;
+}
+
+.btn-light:hover {
+    background-color: #e9ecef;
+}
+
+.btn-primary {
+    background-color: var(--it-theme-1);
+}
+
+.btn-primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15);
+}
+
+.step-title {
+    background-color: var(--it-theme-1);
+    color: white;
+}
+
+input[type="checkbox"] {
+    height: 15px;
+    width: 15px;
+    display: inline-block;
+    margin-right: 8px;
+    cursor: pointer;
+    padding:0;
+  }
+@media (max-width: 768px) {
+    .main-container {
+        margin: 0;
+        border-radius: 0;
+        padding: 1rem;
+    }
+
+    .service-card {
+        padding: 1rem;
+    }
+
+    .service-card i {
+        font-size: 1.25rem;
+    }
+
+    .btn {
+        padding: 0.625rem 1.25rem;
+    }
+
+    .table> :not(caption)>*>* {
+        padding: 0.625rem 0.5rem;
+    }
+
+    .service-icon {
+        width: 28px;
+        height: 28px;
+        min-width: 28px;
+    }
+
+    .service-name {
+        font-size: 0.875rem;
+    }
+
+    .quantity-control {
+        width: 88px;
+        height: 28px;
+    }
+
+    .qty-btn {
+        width: 24px;
+        height: 24px;
+        font-size: 0.875rem;
+    }
+
+    .qty-input {
+        width: 36px;
+        font-size: 0.8125rem;
+    }
+
+    .price,
+    .total {
+        font-size: 0.875rem;
+    }
+}
+
+.step-content {
+    display: none;
+}
+
+.step-content.active {
+    display: block;
+}
+
+.cursor-pointer {
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+}
+
+.cursor-pointer:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 .5rem 1rem rgba(0, 0, 0, .15);
+}
+
+.card.border-primary {
+    border-width: 2px !important;
+}
+
+.form-check-input {
+    cursor: pointer;
+}
+
+.form-check-label {
+    cursor: pointer;
+}
+
+#invoiceAddressSection {
+    transition: opacity 0.15s ease-in-out;
+}
+
+#invoiceAddressSection.fade {
+    opacity: 0;
+}
+
+#invoiceAddressSection:not(.fade) {
+    opacity: 1;
+}
+
+/* Block: Invoice Form */
+.invoice-form {
+    transition: opacity 0.15s ease-in-out, margin 0.15s ease-in-out;
+    opacity: 1;
+    margin-top: 1.5rem;
+}
+
+.invoice-form--fade {
+    opacity: 0;
+}
+
+.invoice-form--hidden {
+    display: none;
+    margin-top: 0;
+}
+
+/* Container styles */
+.container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+/* Card styles */
+.card {
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    margin-bottom: 1.5rem;
+}
+
+.card-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem;
+}
+
+.card-body {
+    padding: 1.25rem;
+}
+
+/* Service item styles */
+.service-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.service-item:last-child {
+    border-bottom: none;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .container {
+        padding: 10px;
+    }
+
+    .card {
+        margin-bottom: 1rem;
+    }
+
+    .service-item {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+
+    .service-price {
+        margin-top: 0.5rem;
+        text-align: left !important;
+    }
+}
+
+/* Summary page specific styles */
+.summary-container {
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.total-amount {
+    font-size: 1.1rem;
+}
+
+/* Make sure form elements are responsive */
+.form-control {
+    max-width: 100%;
+}
+
+/* Add these new rules */
+input[type="text"],
+input[type="email"],
+input[type="tel"] {
+    text-transform: none !important;
+}
+
+input:-webkit-autofill {
+    text-transform: none !important;
+}
+
+/* Step indicators container */
+.step-indicators {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 5rem;
+    position: relative;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+/* Line between circles */
+.step-indicators::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #e9ecef;
+    z-index: 1;
+}
+
+/* Active line */
+.step-indicators::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    height: 2px;
+    background: var(--it-theme-1);
+    z-index: 1;
+    transition: width 0.3s ease;
+}
+
+/* Step circle */
+.step-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: white;
+    border: 2px solid #e9ecef;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    color: #6c757d;
+    position: relative;
+    z-index: 2;
+    transition: all 0.3s ease;
+}
+
+/* Step label */
+.step-label {
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    margin-top: 0.5rem;
+    font-size: 0.875rem;
+    color: #6c757d;
+    white-space: nowrap;
+    transition: color 0.3s ease;
+}
+
+/* Active step */
+.step-circle.active {
+    border-color: var(--it-theme-1);
+    background: var(--it-theme-1);
+    color: white;
+}
+
+.step-indicator.active .step-label {
+    color: var(--it-theme-1);
+    font-weight: 500;
+}
+
+/* Completed step */
+.step-indicator.completed .step-circle {
+    border-color: var(--it-theme-1);
+    background: var(--it-theme-1);
+    color: white;
+}
+
+.step-indicator.completed .step-circle::after {
+    content: '✓';
+    font-family: "Font Awesome 5 Free";
+}
+
+/* Animation for step transition */
+.step-indicator {
+    transition: transform 0.3s ease;
+    position: relative;
+}
