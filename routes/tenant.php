@@ -44,6 +44,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('client', ClientController::class)->names('client');
     Route::resource('status', StatusController::class)->names('status');
     Route::resource('dienst', TypeController::class)->names('dienst');
+    Route::post('dienst/sort', [TypeController::class, 'sort'])->name('dienst.sort');
     Route::resource('setting', SettingController::class)->names('setting');
     Route::resource('employee', EmployeController::class)->names('employee');
     Route::resource('role', RoleController::class)->names('role');

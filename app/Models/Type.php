@@ -11,7 +11,7 @@ class Type extends Model
     use HasFactory;
     use HasMoneyFormat;
 
-    protected $fillable = ['category_id', 'tenant_id', 'name', 'short_name', 'quantity', 'price', 'extra', 'extra_price', 'regions', 'is_offerte'];
+    protected $fillable = ['category_id', 'tenant_id', 'name', 'short_name', 'quantity', 'price', 'extra', 'extra_price', 'regions', 'is_offerte', 'sort_order'];
 
     protected $attributes = [
         'price' => 0,
@@ -53,7 +53,7 @@ class Type extends Model
     }
     public function subTypes()
     {
-        return $this->hasMany(Type::class, 'category_id', 'id');
+        return $this->hasMany(Type::class, 'category_id', 'id')->orderBy('sort_order');
     }
     public function category()
     {

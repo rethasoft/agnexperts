@@ -21,8 +21,39 @@ class TypeController extends Controller
      */
     public function index()
     {
-        $data = Type::where('category_id', 0)->get();
+        $data = Type::where('category_id', 0)->orderBy('sort_order')->get();
         return view($this->path . 'list', compact('data'));
+    }
+
+    public function sort(Request $request)
+    {
+        $request->validate([
+            'orders' => 'required|array',
+            'orders.*.id' => 'required|integer|exists:types,id',
+            'orders.*.sort_order' => 'required|integer',
+            'orders.*.category_id' => 'nullable|integer'
+        ]);
+
+        // Transaction ile toplu güvenli güncelleme
+        \Illuminate\Support\Facades\DB::transaction(function() use ($request) {
+            foreach ($request->orders as $row) {
+                $type = Type::find($row['id']);
+                if (!$type) { continue; }
+                $newCategoryId = array_key_exists('category_id', $row) ? max(0, (int)($row['category_id'] ?? 0)) : $type->category_id;
+
+                // Self-parent guard: Parent satırının category_id'sini asla kendi id'sine eşitleme
+                if ($type->id === $newCategoryId) {
+                    $newCategoryId = 0;
+                }
+
+                $type->update([
+                    'sort_order' => (int)$row['sort_order'],
+                    'category_id' => (int)$newCategoryId
+                ]);
+            }
+        });
+
+        return response()->json(['status' => 'ok']);
     }
 
     /**
