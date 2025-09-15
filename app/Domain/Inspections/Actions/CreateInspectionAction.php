@@ -7,6 +7,7 @@ use App\Domain\Inspections\Models\Inspection;
 use App\Domain\Inspections\Events\InspectionCreated;
 use App\Domain\Inspections\Exceptions\InspectionException;
 use App\Domain\Inspections\Exceptions\InspectionValidationException;
+use App\Models\Status;
 use Illuminate\Support\Facades\Log;
 
 class CreateInspectionAction
@@ -31,6 +32,9 @@ class CreateInspectionAction
             }
 
             // İşlemleri gerçekleştir
+            // Varsayılan status ID'yi belirle (formdan gelmiyorsa default status'u ata)
+            $resolvedStatusId = $data->status_id ?: (optional(Status::default()->first())->id);
+
             $inspection = Inspection::create([
                 'tenant_id' => $data->tenant_id,
                 'client_id' => $data->client_id,
@@ -69,8 +73,12 @@ class CreateInspectionAction
                 // Additional
                 'inspection_date' => $data->inspection_date,
                 'text' => $data->text,
+                'combi_discount_id' => $data->combi_discount_id,
+                'combi_discount_type' => $data->combi_discount_type,
+                'combi_discount_value' => $data->combi_discount_value,
+                'combi_discount_amount' => $data->combi_discount_amount,
 
-                'status_id' => $data->status_id
+                'status_id' => $resolvedStatusId
             ]);
 
             // Items oluştur
@@ -82,6 +90,7 @@ class CreateInspectionAction
                     'quantity'    => $item->quantity,
                     'price'       => $item->price,
                     'total'       => $item->total,
+                    'is_offerte'  => $item->is_offerte ?? false,
                 ]);
             }
 

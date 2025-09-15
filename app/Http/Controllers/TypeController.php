@@ -54,6 +54,13 @@ class TypeController extends Controller
 
             $data = $request->data;
             $data['tenant_id'] = getTenantId();
+            
+            // Handle regions checkbox data
+            $regions = [];
+            if ($request->has('regions')) {
+                $regions = $request->regions;
+            }
+            $data['regions'] = $regions;
 
             $type = new Type();
             if (!$type->create($data))
@@ -99,6 +106,13 @@ class TypeController extends Controller
         try {
             $data = $request->data;
             $data['tenant_id'] = getTenantId();
+            
+            // Handle regions checkbox data
+            $regions = [];
+            if ($request->has('regions')) {
+                $regions = $request->regions;
+            }
+            $data['regions'] = $regions;
 
             if (!$dienst->update($data))
                 return back()->withErrors(['msg' => __('validation.custom.record_added_error')]);

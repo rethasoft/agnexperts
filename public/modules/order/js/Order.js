@@ -4,7 +4,10 @@ class OrderHandler {
         this.selectedServices = new Map(); // Store all selected services
         this.services = new Map(); // Store services and their quantities
         this.currentMainService = null; // Store current main service
+        this.combiDiscount = null; // Store combi discount info
+        this.couponDiscount = null; // Store coupon discount info
         this.initializeEventListeners();
+        this.initializeCouponHandling();
     }
 
     initializeEventListeners() {
@@ -89,8 +92,13 @@ class OrderHandler {
             const serviceName = $(event.target).closest('.service-card').find('span').text();
             console.log('Selected service:', serviceId);
 
-            // Store previously selected services
-            const previouslySelectedServices = new Map(this.selectedServices);
+            // Store previously selected services only for the current main service
+            const previouslySelectedServices = new Map();
+            this.selectedServices.forEach((service, id) => {
+                if (service.parentId === serviceId) {
+                    previouslySelectedServices.set(id, service);
+                }
+            });
 
             // Update active class for main service
             $('.service-card').removeClass('active');
@@ -131,6 +139,9 @@ class OrderHandler {
                                    name="subServices[]"
                                    class="sub-services d-none"
                                    data-price="${subService.price || 0}"
+                                   data-extra="${subService.extra || 0}"
+                                   data-extra_price="${subService.extra_price || 0}"
+                                   data-is_offerte="${subService.is_offerte || false}"
                                    data-category_id="${subService.category_id}"
                                    data-name="${subService.name}"
                                    data-parent-service="${serviceName}"
@@ -141,6 +152,7 @@ class OrderHandler {
                                 <div class="service-info d-flex align-items-center gap-2">
                                     <i class="fas fa-house-user"></i>
                                     <span>${subService.name}</span>
+                                    ${subService.is_offerte ? '<small class="text-info">Offerte</small>' : ''}
                                 </div>
                             </div>
                         </label>
@@ -151,9 +163,7 @@ class OrderHandler {
             // Insert sub-services HTML
             $('.sub-services-row').html(subServicesHtml);
 
-            // Restore previously selected services
-            this.selectedServices = previouslySelectedServices;
-
+            // Don't restore all previous selections, checkboxes are already set correctly
             // Update selected services display
             this.updateSelectedServicesTable();
 
@@ -241,8 +251,28 @@ class OrderHandler {
 
         // Add row for each selected service
         this.selectedServices.forEach((service) => {
-            const total = service.price * service.quantity;
-            grandTotal += total;
+            let total;
+            let priceDisplay;
+            let totalDisplay;
+            
+            // Check if this is an offerte service
+            if (service.is_offerte) {
+                priceDisplay = 'Offerte';
+                totalDisplay = 'Offerte';
+                total = 0; // Offerte services don't contribute to total
+            } else {
+                // Extra price logic: if extra=1 and quantity > 1, use extra_price for additional items
+                if ((service.extra == 1 || service.extra === true) && service.quantity > 1 && service.extra_price) {
+                    // İlk ürün normal fiyat, sonraki ürünler extra fiyat
+                    total = (service.price * 1) + ((service.quantity - 1) * service.extra_price);
+                } else {
+                    // Normal fiyat hesaplaması
+                    total = service.quantity * service.price;
+                }
+                priceDisplay = `€${service.price.toFixed(2)}`;
+                totalDisplay = `€${total.toFixed(2)}`;
+                grandTotal += total;
+            }
 
             const html = `
                 <tr class="service-row" data-id="${service.id}" data-price="${service.price}">
@@ -253,6 +283,7 @@ class OrderHandler {
                             </div>
                             <div>
                                 <div class="service-parent text-muted">${service.name}</div>
+                                ${service.is_offerte ? '<small class="text-info">Offerte - Prijs wordt opgegeven</small>' : ''}
                             </div>
                         </div>
                     </td>
@@ -263,8 +294,8 @@ class OrderHandler {
                             <button type="button" class="qty-btn plus" data-id="${service.id}">+</button>
                         </div>
                     </td>
-                    <td class="text-end price">€${service.price.toFixed(2)}</td>
-                    <td class="text-end total">€${total.toFixed(2)}</td>
+                    <td class="text-end price">${priceDisplay}</td>
+                    <td class="text-end total">${totalDisplay}</td>
                     <td>
                         <button class="remove-btn" aria-label="Remove item" data-id="${service.id}">
                             <i class="fas fa-times"></i>
@@ -275,33 +306,7 @@ class OrderHandler {
             $selectedServicesBody.append(html);
         });
 
-        // Add discount row if there's a valid coupon
-        const discountLabel = $('#coupon-message').text();
-        if (discountLabel && discountLabel.includes('Korting toegepast')) {
-            const originalTotal = grandTotal;
-            const discountedTotal = parseFloat($('#grandTotal').text().replace('€', '').trim());
-            const discountAmount = originalTotal - discountedTotal;
-
-            $selectedServicesBody.append(`
-                <tr class="discount-row text-success">
-                    <td colspan="3">
-                        <div class="d-flex align-items-center">
-                            <div class="discount-icon me-2">
-                                <i class="fas fa-tag"></i>
-                            </div>
-                            <div>${discountLabel}</div>
-                        </div>
-                    </td>
-                    <td class="text-end">-€${discountAmount.toFixed(2)}</td>
-                    <td></td>
-                </tr>
-            `);
-
-            // Update grand total with discounted price
-            $('#grandTotal').text('€' + discountedTotal.toFixed(2));
-        } else {
-            $('#grandTotal').text('€' + grandTotal.toFixed(2));
-        }
+        // Discount display is now handled by updateGrandTotalWithCombi method
 
         // Store original total for coupon calculations
         $('#grandTotal').data('originalTotal', grandTotal.toFixed(2));
@@ -332,6 +337,13 @@ class OrderHandler {
             e.stopPropagation();
             const $row = $(e.currentTarget).closest('tr');
             const serviceId = String($row.data('id'));
+            const service = this.selectedServices.get(serviceId);
+            
+            // Offerte servislerde quantity değişikliğini engelle
+            if (service && service.is_offerte) {
+                return;
+            }
+            
             const $input = $row.find('.qty-input');
             const currentVal = parseInt($input.val()) || 1;
 
@@ -339,7 +351,6 @@ class OrderHandler {
                 $input.val(currentVal + 1);
 
                 // Update quantity in the selectedServices Map
-                const service = this.selectedServices.get(serviceId);
                 service.quantity = currentVal + 1;
                 this.selectedServices.set(serviceId, service);
 
@@ -354,12 +365,18 @@ class OrderHandler {
             e.stopPropagation();
             const $row = $(e.currentTarget).closest('tr');
             const serviceId = String($row.data('id'));
+            const service = this.selectedServices.get(serviceId);
+            
+            // Offerte servislerde quantity değişikliğini engelle
+            if (service && service.is_offerte) {
+                return;
+            }
+            
             const $input = $row.find('.qty-input');
             const currentVal = parseInt($input.val()) || 1;
 
             if (currentVal > 1) {
                 $input.val(currentVal - 1);
-                const service = this.selectedServices.get(serviceId);
                 service.quantity = currentVal - 1;
                 this.selectedServices.set(serviceId, service);
                 this.updateRowTotal($row);
@@ -371,6 +388,15 @@ class OrderHandler {
         $(document).on('change', '.qty-input', (e) => {
             const $input = $(e.currentTarget);
             const $row = $input.closest('tr');
+            const serviceId = String($row.data('id'));
+            const service = this.selectedServices.get(serviceId);
+            
+            // Offerte servislerde quantity değişikliğini engelle
+            if (service && service.is_offerte) {
+                $input.val(1);
+                return;
+            }
+            
             let value = parseInt($input.val()) || 1;
 
             // Ensure value is between 1 and 99
@@ -383,30 +409,74 @@ class OrderHandler {
     }
 
     updateRowTotal($row) {
+        const serviceId = String($row.data('id'));
+        const service = this.selectedServices.get(serviceId);
+        
+        // Offerte servislerde quantity'yi 1'de sabitle
+        if (service && service.is_offerte) {
+            service.quantity = 1;
+            $row.find('.qty-input').val(1);
+            $row.find('.total').text('Offerte');
+            
+            // Update service in selectedServices
+            service.total = 0;
+            this.selectedServices.set(serviceId, service);
+            return;
+        }
+        
         const quantity = parseInt($row.find('.qty-input').val()) || 1;
-        const priceText = $row.find('.price').text().replace(/[^0-9.-]+/g, '');
-        const price = parseFloat(priceText) || 0;
-        const total = quantity * price;
+        
+        let total;
+        let totalDisplay;
+        
+        // Extra price logic: if extra=1 and quantity > 1, use extra_price for additional items
+        if (service && (service.extra == 1 || service.extra === true) && quantity > 1 && service.extra_price) {
+            // İlk ürün normal fiyat, sonraki ürünler extra fiyat
+            total = (service.price * 1) + ((quantity - 1) * service.extra_price);
+        } else {
+            // Normal fiyat hesaplaması
+            const priceText = $row.find('.price').text().replace(/[^0-9.-]+/g, '');
+            const price = parseFloat(priceText) || 0;
+            total = quantity * price;
+        }
+        totalDisplay = `€${total.toFixed(2)}`;
 
-        // Update the total with € at the start
-        $row.find('.total').text('€ ' + total.toFixed(2));
+        // Update service quantity in selectedServices
+        if (service) {
+            service.quantity = quantity;
+            service.total = total;
+            this.selectedServices.set(serviceId, service);
+        }
+
+        // Update the total display
+        $row.find('.total').text(totalDisplay);
         this.updateGrandTotal();
     }
 
     updateGrandTotal() {
+        // Use combi discount aware method if available
+        if (this.combiDiscount !== undefined) {
+            this.updateGrandTotalWithCombi();
+        } else {
+            // Fallback to normal calculation
         let total = 0;
         $('.total').each(function() {
-            const value = $(this).text().replace(/[^0-9.-]+/g, '');
-            total += parseFloat(value) || 0;
+            const value = $(this).text();
+            // Skip offerte services (they don't contribute to total)
+            if (value !== 'Offerte') {
+                const numericValue = value.replace(/[^0-9.-]+/g, '');
+                total += parseFloat(numericValue) || 0;
+            }
         });
 
-        // Update with € at the start
-        $('#grandTotal').text('€ ' + total.toFixed(2));
-        $('#summary-grandTotal').text('€ ' + total.toFixed(2));
+            // Update with € at the start and (Inc. BTW)
+            $('#grandTotal').text('€ ' + total.toFixed(2) + ' (Inc. BTW)');
+            $('#summary-grandTotal').text('€ ' + total.toFixed(2) + ' (Inc. BTW)');
         
         // Store original total for coupon calculations
         $('#grandTotal').data('originalTotal', total.toFixed(2));
         $('#grandTotal').attr('data-original-total', total.toFixed(2));
+        }
     }
 
     validateCurrentStep() {
@@ -439,8 +509,8 @@ class OrderHandler {
                 }
 
                 // Validate sub-services selection
-                const selectedSubServices = $('.sub-services:checked').length;
-                if (selectedSubServices === 0) {
+                // Check total selected services, not just current checkboxes
+                if (this.orderHandler && this.orderHandler.selectedServices.size === 0) {
                     this.showError('Selecteer ten minste één extra service');
                     isValid = false;
                 }
@@ -505,10 +575,10 @@ class OrderHandler {
                 // Validate invoice address if different from delivery
                 if (!$('#sameAsDelivery').is(':checked')) {
                     const requiredInvoiceFields = {
-                        'invoice_street': 'Factuur straat',
-                        'invoice_house_number': 'Factuur huisnummer',
-                        'invoice_city': 'Factuur plaats',
-                        'invoice_postal_code': 'Factuur postcode'
+                        'billing_street': 'Factuur straat',
+                        'billing_number': 'Factuur huisnummer',
+                        'billing_city': 'Factuur plaats',
+                        'billing_postal_code': 'Factuur postcode'
                     };
 
                     Object.entries(requiredInvoiceFields).forEach(([field, label]) => {
@@ -532,10 +602,13 @@ class OrderHandler {
 
         $(document).on('click', '.remove-btn', (e) => {
             const $btn = $(e.target).closest('.remove-btn');
-            const serviceId = $btn.data('id');
+            const serviceId = String($btn.data('id'));
 
             // Uncheck the corresponding checkbox
             $(`input[value="${serviceId}"].sub-services`).prop('checked', false);
+            
+            // Remove active class from service card
+            $(`input[value="${serviceId}"].sub-services`).closest('.service-card').removeClass('active');
 
             // Remove from selected services and table
             this.selectedServices.delete(serviceId);
@@ -543,6 +616,9 @@ class OrderHandler {
 
             this.updateGrandTotal();
             $('.summary-table').toggle(this.selectedServices.size > 0);
+            
+            // Check combi discount again after removing service
+            this.checkCombiDiscount();
         });
     }
 
@@ -555,8 +631,20 @@ class OrderHandler {
             // const serviceName = $(this).find('.service-name').text();
             const serviceName = $(this).find('.service-parent').text();
             const quantity = $(this).find('.qty-input').val();
-            const price = parseFloat($(this).find('.price').text().replace('€', '').trim());
-            const total = parseFloat($(this).find('.total').text().replace('€', '').trim());
+            const priceText = $(this).find('.price').text();
+            const totalText = $(this).find('.total').text();
+            
+            // Check if this is an offerte service
+            const isOfferte = priceText === 'Offerte' || totalText === 'Offerte';
+            
+            let price, total;
+            if (isOfferte) {
+                price = 0;
+                total = 0;
+            } else {
+                price = parseFloat(priceText.replace('€', '').trim()) || 0;
+                total = parseFloat(totalText.replace('€', '').trim()) || 0;
+            }
 
             servicesHtml += `
                 <div class="mb-3 pb-3 border-bottom">
@@ -564,10 +652,10 @@ class OrderHandler {
                         <div>
                             <h6 class="mb-1">${serviceName}</h6>
                             <small class="text-muted">Aantal: ${quantity}</small>
+                            ${isOfferte ? '<br><small class="text-info">Offerte - Prijs wordt opgegeven</small>' : ''}
                         </div>
                         <div class="text-end">
-                            <div class="text-muted small">€${price.toFixed(2)} per stuk</div>
-                            <strong>€${total.toFixed(2)}</strong>
+                            <strong>${isOfferte ? 'Offerte' : '€' + total.toFixed(2)}</strong>
                         </div>
                     </div>
                 </div>
@@ -576,32 +664,70 @@ class OrderHandler {
             subtotal += total;
         });
 
-        // Add discount information if there's a valid coupon
-        const discountLabel = $('#coupon-message').text();
-        if (discountLabel && discountLabel.includes('Korting toegepast')) {
-            const discountedTotal = parseFloat($('#grandTotal').text().replace('€', '').trim());
-            const discountAmount = subtotal - discountedTotal;
+        // Calculate all discounts step by step
+        let finalTotal = subtotal;
+
+        // 1. Add Combi Discount if available
+        if (this.combiDiscount && this.combiDiscount.has_combi) {
+            let combiDiscountValue = parseFloat(this.combiDiscount.discount_value);
+            let combiDiscountAmount = 0;
+            
+            if (this.combiDiscount.discount_type === 'percentage') {
+                combiDiscountAmount = subtotal * (combiDiscountValue / 100);
+            } else {
+                combiDiscountAmount = combiDiscountValue;
+            }
+
+            finalTotal -= combiDiscountAmount;
+            if (finalTotal < 0) finalTotal = 0;
 
             servicesHtml += `
                 <div class="mb-3 pb-3 border-bottom text-success">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <h6 class="mb-1"><i class="fas fa-tag me-2"></i>${discountLabel}</h6>
+                            <h6 class="mb-1"><i class="fas fa-tags me-2"></i>Combi-korting toegepast!</h6>
+                            <small class="text-muted">${this.combiDiscount.discount_type === 'percentage' ? combiDiscountValue + '%' : '€' + combiDiscountValue.toFixed(2)} korting</small>
                         </div>
                         <div class="text-end">
-                            <strong>-€${discountAmount.toFixed(2)}</strong>
+                            <strong>-€${combiDiscountAmount.toFixed(2)}</strong>
                         </div>
                     </div>
                 </div>
             `;
-
-            // Update totals with discount
-            $('#grandTotal').text('€' + discountedTotal.toFixed(2));
-            $('#summary-grandTotal').text('€' + discountedTotal.toFixed(2));
-        } else {
-            $('#grandTotal').text('€' + subtotal.toFixed(2));
-            $('#summary-grandTotal').text('€' + subtotal.toFixed(2));
         }
+
+        // 2. Add Coupon Discount if available (applied after combi discount)
+        if (this.couponDiscount && this.couponDiscount.valid) {
+            let couponDiscountValue = parseFloat(this.couponDiscount.discount_value);
+            let couponDiscountAmount = 0;
+            
+            if (this.couponDiscount.discount_type === 'percentage') {
+                couponDiscountAmount = finalTotal * (couponDiscountValue / 100);
+        } else {
+                couponDiscountAmount = couponDiscountValue;
+            }
+
+            finalTotal -= couponDiscountAmount;
+            if (finalTotal < 0) finalTotal = 0;
+
+            servicesHtml += `
+                <div class="mb-3 pb-3 border-bottom text-info">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                            <h6 class="mb-1"><i class="fas fa-tag me-2"></i>Coupon-korting toegepast!</h6>
+                            <small class="text-muted">${this.couponDiscount.discount_type === 'percentage' ? couponDiscountValue + '%' : '€' + couponDiscountValue.toFixed(2)} korting</small>
+                        </div>
+                        <div class="text-end">
+                            <strong>-€${couponDiscountAmount.toFixed(2)}</strong>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // Update final totals
+        $('#grandTotal').text('€' + finalTotal.toFixed(2) + ' (Inc. BTW)');
+        $('#summary-grandTotal').text('€' + finalTotal.toFixed(2) + ' (Inc. BTW)');
 
         $servicesList.html(servicesHtml);
 
@@ -654,9 +780,9 @@ class OrderHandler {
             addressHtml += `
                 <div class="mt-4">
                     <h6 class="mb-3">Factuuradres</h6>
-                    <p class="mb-1">${$('input[name="invoice_street"]').val()} ${$('input[name="invoice_house_number"]').val()}</p>
-                    ${$('input[name="invoice_house_number_addition"]').val() ? `<p class="mb-1">Toevoeging: ${$('input[name="invoice_house_number_addition"]').val()}</p>` : ''}
-                    <p class="mb-1">${$('input[name="invoice_postal_code"]').val()} ${$('input[name="invoice_city"]').val()}</p>
+                    <p class="mb-1">${$('input[name="billing_street"]').val()} ${$('input[name="billing_number"]').val()}</p>
+                    ${$('input[name="billing_box"]').val() ? `<p class="mb-1">Toevoeging: ${$('input[name="billing_box"]').val()}</p>` : ''}
+                    <p class="mb-1">${$('input[name="billing_postal_code"]').val()} ${$('input[name="billing_city"]').val()}</p>
                 </div>
             `;
         }
@@ -666,7 +792,14 @@ class OrderHandler {
 
     addServiceToSummary(serviceData) {
         const serviceId = serviceData.id;
-        const price = parseFloat(serviceData.price.replace(/[^0-9.-]+/g, ""));
+        
+        // Check if this is an offerte service
+        let price;
+        if (serviceData.is_offerte) {
+            price = 0; // Offerte services don't have a price
+        } else {
+            price = parseFloat(serviceData.price.replace(/[^0-9.-]+/g, "")) || 0;
+        }
 
         // Preserve existing quantities
         this.saveCurrentQuantities();
@@ -676,6 +809,7 @@ class OrderHandler {
             // Update existing service
             const existingService = this.services.get(serviceId);
             existingService.price = price;
+            existingService.is_offerte = serviceData.is_offerte || false;
             console.log('exist - ' + existingService);
             // this.services.set(serviceId, existingService);
             this.updateServiceRow(existingService);
@@ -685,7 +819,8 @@ class OrderHandler {
                 id: serviceId,
                 name: serviceData.name,
                 price: price,
-                quantity: 1
+                quantity: 1,
+                is_offerte: serviceData.is_offerte || false
             };
             // this.services.set(serviceId, newService);
             console.log('new - ' + newService);
@@ -699,19 +834,42 @@ class OrderHandler {
     saveCurrentQuantities() {
         $('#selectedServicesBody tr').each((_, row) => {
             const $row = $(row);
-            const serviceId = $row.data('service-id');
-            const quantity = parseInt($row.find('input').val());
+            const serviceId = $row.data('id'); // Changed from data-service-id to data-id
+            const quantity = parseInt($row.find('.qty-input').val()) || 1;
 
-            if (this.services.has(serviceId)) {
-                const service = this.services.get(serviceId);
+            if (this.selectedServices.has(serviceId)) {
+                const service = this.selectedServices.get(serviceId);
                 service.quantity = quantity;
-                this.services.set(serviceId, service);
+                this.selectedServices.set(serviceId, service);
             }
         });
     }
 
     appendServiceRow(service) {
-        const total = service.price * service.quantity;
+        let total;
+        let priceDisplay;
+        let totalDisplay;
+        
+        // Check if this is an offerte service
+        if (service.is_offerte) {
+            priceDisplay = 'Offerte';
+            totalDisplay = 'Offerte';
+            total = 0;
+            // Offerte servislerde quantity'yi 1'de sabitle
+            service.quantity = 1;
+        } else {
+            // Extra price logic: if extra=1 and quantity > 1, use extra_price for additional items
+            if ((service.extra == 1 || service.extra === true) && service.quantity > 1 && service.extra_price) {
+                // İlk ürün normal fiyat, sonraki ürünler extra fiyat
+                total = (service.price * 1) + ((service.quantity - 1) * service.extra_price);
+            } else {
+                // Normal fiyat hesaplaması
+                total = service.price * service.quantity;
+            }
+            priceDisplay = `€${service.price.toFixed(2)}`;
+            totalDisplay = `€${total.toFixed(2)}`;
+        }
+        
         const html = `
             <tr class="service-row" data-id="${service.id}" data-price="${service.price}">
                 <td>
@@ -721,18 +879,19 @@ class OrderHandler {
                         </div>
                         <div>
                             <div class="service-parent text-muted">${service.name}</div>
+                            ${service.is_offerte ? '<small class="text-info">Offerte - Prijs wordt opgegeven</small>' : ''}
                         </div>
                     </div>
                 </td>
                 <td>
                     <div class="quantity-control d-flex align-items-center justify-content-center">
-                        <button type="button" class="qty-btn minus" data-id="${service.id}">-</button>
-                        <input type="number" class="qty-input" value="${service.quantity}" min="1" max="99" style="height:57px">
-                        <button type="button" class="qty-btn plus" data-id="${service.id}">+</button>
+                        <button type="button" class="qty-btn minus" data-id="${service.id}" ${service.is_offerte ? 'disabled' : ''}>-</button>
+                        <input type="number" class="qty-input" value="${service.quantity}" min="1" max="99" style="height:57px" ${service.is_offerte ? 'disabled' : ''}>
+                        <button type="button" class="qty-btn plus" data-id="${service.id}" ${service.is_offerte ? 'disabled' : ''}>+</button>
                     </div>
                 </td>
-                <td class="text-end price">€${service.price.toFixed(2)}</td>
-                <td class="text-end total">€${total.toFixed(2)}</td>
+                <td class="text-end price">${priceDisplay}</td>
+                <td class="text-end total">${totalDisplay}</td>
                 <td>
                     <button class="remove-btn" aria-label="Remove item" data-id="${service.id}">
                         <i class="fas fa-times"></i>
@@ -744,44 +903,67 @@ class OrderHandler {
     }
 
     updateServiceRow(service) {
-        const $row = $(`tr[data-service-id="${service.id}"]`);
-        const total = (service.price * service.quantity).toFixed(2);
-
-        $row.find('input').val(service.quantity);
-        $row.find('.total').text(`€ ${total}`);
+        const $row = $(`tr[data-id="${service.id}"]`); // Changed from data-service-id to data-id
+        
+        // Check if this is an offerte service
+        if (service.is_offerte) {
+            // Offerte servislerde quantity'yi 1'de sabitle
+            service.quantity = 1;
+            $row.find('.qty-input').val(1).prop('disabled', true);
+            $row.find('.qty-btn.minus').prop('disabled', true);
+            $row.find('.qty-btn.plus').prop('disabled', true);
+            $row.find('.total').text('Offerte');
+        } else {
+            // Extra price logic: if extra=1 and quantity > 1, use extra_price for additional items
+            let total;
+            if ((service.extra == 1 || service.extra === true) && service.quantity > 1 && service.extra_price) {
+                // İlk ürün normal fiyat, sonraki ürünler extra fiyat
+                total = (service.price * 1) + ((service.quantity - 1) * service.extra_price);
+            } else {
+                // Normal fiyat hesaplaması
+                total = service.price * service.quantity;
+            }
+            
+            $row.find('.qty-input').val(service.quantity).prop('disabled', false); // Changed from input to .qty-input
+            $row.find('.qty-btn.minus').prop('disabled', false);
+            $row.find('.qty-btn.plus').prop('disabled', false);
+            $row.find('.total').text(`€ ${total.toFixed(2)}`);
+        }
     }
 
     bindEventsToRow($row) {
-        const serviceId = $row.data('service-id');
-        const service = this.services.get(serviceId);
-        const $input = $row.find('input');
+        const serviceId = $row.data('id'); // Changed from data-service-id to data-id
+        const service = this.selectedServices.get(serviceId); // Changed from this.services to this.selectedServices
+        const $input = $row.find('.qty-input'); // Changed from input to .qty-input
+
+        // Offerte servislerde quantity değişikliklerini engelle
+        if (service && service.is_offerte) {
+            return; // Offerte servislerde event'leri bağlama
+        }
 
         $row.find('.plus').click(() => {
             service.quantity = parseInt($input.val()) + 1;
-            this.services.set(serviceId, service);
-            this.updateServiceRow(service);
-            this.updateGrandTotal();
+            this.selectedServices.set(serviceId, service);
+            this.updateRowTotal($row); // updateRowTotal kullan
         });
 
         $row.find('.minus').click(() => {
             service.quantity = Math.max(1, parseInt($input.val()) - 1);
-            this.services.set(serviceId, service);
-            this.updateServiceRow(service);
-            this.updateGrandTotal();
+            this.selectedServices.set(serviceId, service);
+            this.updateRowTotal($row); // updateRowTotal kullan
         });
 
         $input.on('change', () => {
             service.quantity = Math.max(1, parseInt($input.val()) || 1);
-            this.services.set(serviceId, service);
-            this.updateServiceRow(service);
-            this.updateGrandTotal();
+            this.selectedServices.set(serviceId, service);
+            this.updateRowTotal($row); // updateRowTotal kullan
         });
 
-        $row.find('.remove').click(() => {
-            this.services.delete(serviceId);
+        $row.find('.remove-btn').click(() => { // Changed from .remove to .remove-btn
+            this.selectedServices.delete(serviceId);
             $row.remove();
             this.updateGrandTotal();
-            if (this.services.size === 0) {
+            if (this.selectedServices.size === 0) {
                 $('.summary-table').hide();
             }
         });
@@ -789,9 +971,9 @@ class OrderHandler {
 
     handleSubServiceClick(event) {
         const $checkbox = $(event.target);
-        const serviceId = $checkbox.val();
+        const serviceId = String($checkbox.val());
         const parentService = $checkbox.data('parent-service');
-        const parentId = $checkbox.data('parent-id');
+        const parentId = String($checkbox.data('parent-id'));
         const $serviceCard = $checkbox.closest('.service-card');
         const serviceName = $checkbox.data('name');
 
@@ -805,6 +987,9 @@ class OrderHandler {
                     name: `${parentService} > ${serviceName}`,
                     category_id: $checkbox.data('category_id'),
                     price: parseFloat($checkbox.data('price')),
+                    extra: $checkbox.data('extra') || 0,
+                    extra_price: parseFloat($checkbox.data('extra_price')) || 0,
+                    is_offerte: $checkbox.data('is_offerte') || false,
                     quantity: 1,
                     total: parseFloat($checkbox.data('price')),
                     icon: 'house-user', // Default icon
@@ -813,7 +998,11 @@ class OrderHandler {
                 };
 
                 // Update total before adding to selected services
-                serviceData.total = serviceData.price * serviceData.quantity;
+                if (serviceData.is_offerte) {
+                    serviceData.total = 0; // Offerte services don't have a total
+                } else {
+                    serviceData.total = serviceData.price * serviceData.quantity;
+                }
 
                 this.selectedServices.set(serviceId, serviceData);
                 this.appendServiceRow(serviceData);
@@ -828,6 +1017,9 @@ class OrderHandler {
 
         this.updateGrandTotal();
         $('.summary-table').toggle(this.selectedServices.size > 0);
+        
+        // Check for combi discount
+        this.checkCombiDiscount();
     }
 
     addSelectedServicesToForm() {
@@ -843,8 +1035,227 @@ class OrderHandler {
                 <input type="hidden" class="hidden-service-input" name="selectedServices[${index}][quantity]" value="${service.quantity}">
                 <input type="hidden" class="hidden-service-input" name="selectedServices[${index}][price]" value="${service.price}">
                 <input type="hidden" class="hidden-service-input" name="selectedServices[${index}][total]" value="${service.total}">
+                <input type="hidden" class="hidden-service-input" name="selectedServices[${index}][is_offerte]" value="${service.is_offerte ? 1 : 0}">
             `);
         });
+    }
+
+    checkCombiDiscount() {
+        const serviceIds = Array.from(this.selectedServices.keys());
+        
+        if (serviceIds.length < 2) {
+            $('#combi-discount-info').remove();
+            this.combiDiscount = null;
+            this.updateGrandTotal();
+            return;
+        }
+
+        $.ajax({
+            url: '/keuring-aanvragen/check-combi-discount',
+            type: 'POST',
+            data: {
+                service_ids: serviceIds,
+                _token: $('meta[name=csrf-token]').attr('content')
+            },
+            success: (response) => {
+                $('#combi-discount-info').remove();
+                this.combiDiscount = response;
+                
+                if (response.has_combi) {
+                    // Show combi discount message
+                    let msg = '<div id="combi-discount-info" class="alert alert-success mt-3">';
+                    msg += '<strong>Combi-korting toegepast!</strong> ';
+                    if (response.discount_type === 'percentage') {
+                        msg += 'Er wordt <b>' + response.discount_value + '%</b> korting toegepast op het totaalbedrag.';
+                    } else {
+                        msg += 'Er wordt <b>€' + response.discount_value + '</b> korting toegepast op het totaalbedrag.';
+                    }
+                    msg += '</div>';
+                    
+                    // Add message after summary table
+                    $('.summary-table').after(msg);
+                }
+                
+                // Update total with discount
+                this.updateGrandTotalWithCombi();
+            },
+            error: (xhr, status, error) => {
+                console.error('Combi discount check failed:', {
+                    status: status,
+                    error: error,
+                    responseText: xhr.responseText,
+                    statusText: xhr.statusText,
+                    url: '/keuring-aanvragen/check-combi-discount',
+                    serviceIds: serviceIds
+                });
+            }
+        });
+    }
+
+    updateGrandTotalWithCombi() {
+        let total = 0;
+        this.selectedServices.forEach((service) => {
+            let serviceTotal;
+            
+            // Check if this is an offerte service
+            if (service.is_offerte) {
+                serviceTotal = 0; // Offerte services don't contribute to total
+            } else {
+                // Extra price logic: if extra=1 and quantity > 1, use extra_price for additional items
+                if ((service.extra == 1 || service.extra === true) && service.quantity > 1 && service.extra_price) {
+                    // İlk ürün normal fiyat, sonraki ürünler extra fiyat
+                    serviceTotal = (service.price * 1) + ((service.quantity - 1) * service.extra_price);
+                } else {
+                    // Normal fiyat hesaplaması
+                    serviceTotal = service.quantity * service.price;
+                }
+            }
+            total += serviceTotal;
+        });
+
+        let finalTotal = total;
+        let displayElements = [];
+
+        // 1. Apply Combi Discount first
+        if (this.combiDiscount && this.combiDiscount.has_combi) {
+            let combiDiscountValue = parseFloat(this.combiDiscount.discount_value);
+            let combiDiscountAmount = 0;
+            
+            if (this.combiDiscount.discount_type === 'percentage') {
+                combiDiscountAmount = total * (combiDiscountValue / 100);
+            } else {
+                combiDiscountAmount = combiDiscountValue;
+            }
+            
+            finalTotal -= combiDiscountAmount;
+            if (finalTotal < 0) finalTotal = 0;
+            
+            let combiText = this.combiDiscount.discount_type === 'percentage' 
+                ? `€${combiDiscountAmount.toFixed(2)} Combi-korting (${combiDiscountValue}%)`
+                : `€${combiDiscountAmount.toFixed(2)} Combi-korting (€${combiDiscountValue.toFixed(2)})`;
+            
+            displayElements.push(`<small class="text-success">| ${combiText}</small>`);
+        }
+
+        // 2. Apply Coupon Discount second (to the already discounted price)
+        if (this.couponDiscount && this.couponDiscount.valid) {
+            let couponDiscountValue = parseFloat(this.couponDiscount.discount_value);
+            let couponDiscountAmount = 0;
+            
+            if (this.couponDiscount.discount_type === 'percentage') {
+                couponDiscountAmount = finalTotal * (couponDiscountValue / 100);
+            } else {
+                couponDiscountAmount = couponDiscountValue;
+            }
+            
+            finalTotal -= couponDiscountAmount;
+            if (finalTotal < 0) finalTotal = 0;
+            
+            let couponText = this.couponDiscount.discount_type === 'percentage' 
+                ? `€${couponDiscountAmount.toFixed(2)} Coupon-korting (${couponDiscountValue}%)`
+                : `€${couponDiscountAmount.toFixed(2)} Coupon-korting (€${couponDiscountValue.toFixed(2)})`;
+            
+            displayElements.push(`<small class="text-info">| ${couponText}</small>`);
+        }
+
+        // 3. Update Display
+        if (displayElements.length > 0) {
+            let displayHtml = `
+                <div class="text-end">
+                    <small class="text-muted text-decoration-line-through">€${total.toFixed(2)} (Inc. BTW)</small>
+                    <br><span class="fw-bold">€${finalTotal.toFixed(2)} (Inc. BTW)</span>
+                    <br>${displayElements.join('<br>')}
+                </div>
+            `;
+            $('#grandTotal').html(displayHtml);
+        } else {
+            // Normal display - no discounts
+            $('#grandTotal').text('€ ' + total.toFixed(2) + ' (Inc. BTW)');
+        }
+        
+        $('#summary-grandTotal').text('€ ' + finalTotal.toFixed(2) + ' (Inc. BTW)');
+    }
+
+    initializeCouponHandling() {
+        const couponInput = document.querySelector('input[name="coupon_code"]');
+        if (couponInput) {
+            $(couponInput).off('input').on('input', (e) => this.handleCouponInput(e));
+        }
+    }
+
+    async handleCouponInput(event) {
+        const couponCode = event.target.value;
+        
+        if (couponCode.length === 8) {
+            try {
+                const result = await this.validateCoupon(couponCode);
+                this.couponDiscount = result;
+                this.updateGrandTotalWithCombi(); // Reapply all discounts
+                this.updateCouponMessage(result);
+            } catch (error) {
+                this.showCouponError('Er is een fout opgetreden bij het valideren van de kortingscode.');
+            }
+        } else {
+            if (couponCode.length === 0) {
+                this.couponDiscount = null;
+                this.updateGrandTotalWithCombi(); // Remove coupon discount
+                this.clearCouponMessage();
+            } else if (couponCode.length < 8) {
+                this.showCouponError('Kortingscode moet 8 tekens lang zijn');
+            }
+        }
+    }
+
+    async validateCoupon(couponCode) {
+        const formData = new FormData();
+        formData.append('coupon_code', couponCode);
+        formData.append('_token', $('meta[name="csrf-token"]').attr('content'));
+
+        const response = await fetch(`${this.baseUrl}/validate-coupon`, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            throw new Error('Netwerkrespons was niet in orde');
+        }
+
+        const data = await response.json();
+        return data;
+    }
+
+    updateCouponMessage(result) {
+        const couponMessage = document.getElementById('coupon-message');
+        if (couponMessage) {
+            if (result.valid) {
+                let discountText = '';
+                if (result.discount_type === 'percentage') {
+                    discountText = `Korting toegepast: ${result.discount_value}%`;
+                } else {
+                    discountText = `Korting toegepast: €${result.discount_value}`;
+                }
+                couponMessage.textContent = discountText;
+                couponMessage.style.color = 'green';
+            } else {
+                couponMessage.textContent = result.message || 'Ongeldige kortingscode';
+                couponMessage.style.color = 'red';
+            }
+        }
+    }
+
+    showCouponError(message) {
+        const couponMessage = document.getElementById('coupon-message');
+        if (couponMessage) {
+            couponMessage.textContent = message;
+            couponMessage.style.color = 'red';
+        }
+    }
+
+    clearCouponMessage() {
+        const couponMessage = document.getElementById('coupon-message');
+        if (couponMessage) {
+            couponMessage.textContent = '';
+        }
     }
 }
 
@@ -1020,8 +1431,8 @@ class StepHandler {
                 }
 
                 // Validate sub-services selection
-                const selectedSubServices = $('.sub-services:checked').length;
-                if (selectedSubServices === 0) {
+                // Check total selected services, not just current checkboxes
+                if (this.orderHandler && this.orderHandler.selectedServices.size === 0) {
                     this.showError('Selecteer ten minste één extra service');
                     isValid = false;
                 }
@@ -1086,10 +1497,10 @@ class StepHandler {
                 // Validate invoice address if different from delivery
                 if (!$('#sameAsDelivery').is(':checked')) {
                     const requiredInvoiceFields = {
-                        'invoice_street': 'Factuur straat',
-                        'invoice_house_number': 'Factuur huisnummer',
-                        'invoice_city': 'Factuur plaats',
-                        'invoice_postal_code': 'Factuur postcode'
+                        'billing_street': 'Factuur straat',
+                        'billing_number': 'Factuur huisnummer',
+                        'billing_city': 'Factuur plaats',
+                        'billing_postal_code': 'Factuur postcode'
                     };
 
                     Object.entries(requiredInvoiceFields).forEach(([field, label]) => {
@@ -1147,14 +1558,19 @@ class StepHandler {
     }
 
     copyDeliveryAddress() {
-        const fields = ['Street', 'HouseNumber', 'Box', 'PostalCode', 'City'];
-        fields.forEach(field => {
-            $(`#invoice${field}`).val($(`#${field.toLowerCase()}`).val());
-        });
+        $('input[name="billing_street"]').val($('input[name="street"]').val());
+        $('input[name="billing_number"]').val($('input[name="number"]').val());
+        $('input[name="billing_box"]').val($('input[name="box"]').val());
+        $('input[name="billing_postal_code"]').val($('input[name="postal_code"]').val());
+        $('input[name="billing_city"]').val($('input[name="city"]').val());
     }
 
     clearInvoiceFields() {
-        $('.invoice-input').val('');
+        $('input[name="billing_street"]').val('');
+        $('input[name="billing_number"]').val('');
+        $('input[name="billing_box"]').val('');
+        $('input[name="billing_postal_code"]').val('');
+        $('input[name="billing_city"]').val('');
     }
 
     submitOrder() {

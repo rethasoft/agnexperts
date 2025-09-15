@@ -27,6 +27,22 @@ class OrderController extends Controller
     public function store(CreateInspectionRequest $request)
     {
         try {
+            // selectedServices'ı items'a dönüştür
+            if ($request->has('selectedServices')) {
+                $items = [];
+                foreach ($request->selectedServices as $service) {
+                    $items[] = [
+                        'type_id' => $service['id'],
+                        'category_id' => $service['category_id'], 
+                        'name' => $service['name'],
+                        'quantity' => $service['quantity'],
+                        'price' => $service['price'],
+                        'total' => $service['total']
+                    ];
+                }
+                $request->merge(['items' => $items]);
+            }
+
             // Request verilerini InspectionData'ya dönüştür
             $inspectionData = InspectionData::fromRequest($request);
 
@@ -49,17 +65,25 @@ class OrderController extends Controller
 
     public function getServices($location)
     {
-        // Return services based on location
-        // $services = Type::where('location', $location)->get();
-        $services = Type::where('category_id', 0)->get();
+        // Return services based on location and regions
+        $services = Type::where('category_id', 0)
+            ->whereJsonContains('regions', $location)
+            ->get();
         return response()->json($services);
     }
 
     public function getSubServices($service_id)
     {
-        // Return sub-services based on service
-        $subServices = Type::where('category_id', $service_id)->get();
-        return response()->json($subServices);
+        // Return sub-services based on service and selected location
+        $selectedLocation = request()->query('location');
+        
+        $subServices = Type::where('category_id', $service_id);
+        
+        if ($selectedLocation) {
+            $subServices = $subServices->whereJsonContains('regions', $selectedLocation);
+        }
+        
+        return response()->json($subServices->get());
     }
 
     public function validateCoupon(Request $request)
@@ -91,5 +115,15 @@ class OrderController extends Controller
                 'errorCode' => 'INVALID_CODE'
             ], 404); // Not Found
         }
+    }
+
+    public function checkCombiDiscount(Request $request)
+    {
+        // Mevcut CombiDiscountController'ın method'unu kullan
+        $combiController = new \App\Http\Controllers\CombiDiscountController(
+            new \App\Domain\Inspections\Repositories\CombiDiscountRepository()
+        );
+        
+        return $combiController->checkCombiDiscount($request);
     }
 }

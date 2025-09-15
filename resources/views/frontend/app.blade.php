@@ -9,6 +9,22 @@
     <!-- Primary Meta Tags -->
     <meta name="title" content="@yield('title')">
     <meta name="description" content="@yield('description')">
+    <meta name="keywords" content="@yield('keywords', 'EPC Attest, keuring, asbestattest, elektrische keuring, vastgoedkeuring, België')">
+    <meta name="author" content="@yield('author', 'AGN Experts')">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="nl">
+    <meta name="geo.region" content="BE">
+    <meta name="geo.placename" content="Antwerpen">
+    <meta name="geo.position" content="51.1709;4.3957">
+    <meta name="ICBM" content="51.1709, 4.3957">
+    <link rel="canonical" href="@yield('canonical', url()->current())">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ asset('frontend/assets/img/logo/favicon.png') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('frontend/assets/img/logo/favicon.png') }}">
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('frontend/assets/img/logo/favicon.png') }}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('frontend/assets/img/logo/favicon.png') }}">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -18,6 +34,8 @@
     <meta property="og:image" content="@yield('image')">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
+    <meta property="og:site_name" content="AGN Experts">
+    <meta property="og:locale" content="nl_BE">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
@@ -27,8 +45,9 @@
     <meta property="twitter:image" content="@yield('image')">
     <meta property="twitter:image:width" content="1200">
     <meta property="twitter:image:height" content="600">
+    <meta property="twitter:site" content="@agnexperts">
+    <meta property="twitter:creator" content="@agnexperts">
 
-    <meta name=viewport content="width=device-width, initial-scale=1">
     <link rel="shortcut icon" type="image/x-icon" href="assets/img/logo/favicon.png">
     <link rel=stylesheet href="{{ asset('frontend/assets/css/bootstrap.min.css') }}">
     <link rel=stylesheet href="{{ asset('frontend/assets/css/animate.css') }}">
@@ -41,7 +60,7 @@
     <link rel=stylesheet href="{{ asset('frontend/assets/css/magnific-popup.css') }}">
     <link rel=stylesheet href="{{ asset('frontend/assets/css/spacing.css') }}">
     <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
-    <link rel=stylesheet href="{{ asset('frontend/assets/css/style.css?v=1.0.1') }}">
+    <link rel=stylesheet href="{{ asset('frontend/assets/css/style.css?v=1.0.2') }}">
     <script src="{{ asset('frontend/assets/js/jquery.js') }}"></script>
     <meta name="csrf-token" content="{{ csrf_token() }}">
     
@@ -109,7 +128,7 @@
     </button>
     
     <!-- WhatsApp Button -->
-    <a href="https://wa.me/32451031121" target="_blank" class="whatsapp-button" aria-label="WhatsApp">
+    <a href="https://wa.me/+320451031121" target="_blank" class="whatsapp-button" aria-label="WhatsApp">
         <i class="fa-brands fa-whatsapp"></i>
     </a>
     <div class=it-offcanvas-area>
@@ -119,7 +138,7 @@
             </div>
             <div class="itoffcanvas__logo">
                 <a href="/">
-                    <img src="{{ asset('frontend/assets/img/logo/agn-experts-logoo.png') }}" alt="Agn Experts">
+                    <img src="{{ asset('frontend/assets/img/logo/agn-experts-logoo-white.png') }}" alt="Agn Experts">
                 </a>
             </div>
             <div class=it-menu-mobile></div>
@@ -231,7 +250,7 @@
                                         <div class=it-footer-2-top-text>
                                             <span>Telefoon:</span>
                                             <h3 class=it-section-title-sm>
-                                                <a href="tel:+32 (0)493 936 112">+32 (0)493 936 112</a>
+                                                <a href="tel:+32 (0)451 031 121">+32 (0)451 031 121</a>
                                             </h3>
                                         </div>
                                     </div>
@@ -319,7 +338,7 @@
                                     <ul>
                                         <li><a href="{{ route('tarieven') }}">Jules Moretuslei 52 </a></li>
                                         <li><a href="{{ route('tarieven') }}">2610 Wilrijk (Antwerpen)</a></li>
-                                        <li><a href="tel:+32 (0)493 936 112">+32 (0)493 936 112</a></li>
+                                        <li><a href="tel:+32 (0)451 031 121">+32 (0)451 031 121</a></li>
                                         <li><a href="mailto:info@agnexperts.be">info@agnexperts.be</a></li>
                                         <li><a href="{{ route('about') }}">BTW nummer: BE1000.146.907</a></li>
                                     </ul>

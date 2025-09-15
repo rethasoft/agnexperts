@@ -125,4 +125,67 @@ $(document).ready(function () {
         });
       });
   };
+
+  // Make toggleOfferte function available in document ready scope
+  window.toggleOfferte = function(elem) {
+    const priceInput = document.getElementById('price');
+    const extraCheckbox = document.querySelector('input[type="checkbox"][name="data[extra]"]');
+    const extraPriceDiv = document.getElementById('extra-price');
+    const extraPriceInput = document.getElementById('extra_price');
+    
+    if (elem.checked) {
+      // If offerte is checked, disable price input and set it to 0
+      if (priceInput) {
+        priceInput.disabled = true;
+        priceInput.value = '0';
+        priceInput.classList.add('bg-light');
+      }
+      
+      // Disable extra checkbox and hide extra price section
+      if (extraCheckbox) {
+        extraCheckbox.disabled = true;
+        extraCheckbox.checked = false;
+      }
+      
+      if (extraPriceDiv) {
+        extraPriceDiv.classList.add('d-none');
+      }
+      
+      if (extraPriceInput) {
+        extraPriceInput.disabled = true;
+        extraPriceInput.value = '0';
+      }
+    } else {
+      // If offerte is unchecked, enable price input
+      if (priceInput) {
+        priceInput.disabled = false;
+        priceInput.classList.remove('bg-light');
+      }
+      
+      // Enable extra checkbox
+      if (extraCheckbox) {
+        extraCheckbox.disabled = false;
+      }
+      
+      if (extraPriceInput) {
+        extraPriceInput.disabled = false;
+      }
+    }
+  };
+
+  // Simple jQuery code for offerte functionality
+  $(document).ready(function() {
+    // Check if we're on types add/edit page
+    if ($('#is_offerte').length > 0) {
+      // If offerte is already checked on page load
+      if ($('#is_offerte').is(':checked')) {
+        toggleOfferte($('#is_offerte')[0]);
+      }
+      
+      // Handle offerte checkbox change
+      $('#is_offerte').on('change', function() {
+        toggleOfferte(this);
+      });
+    }
+  });
 });

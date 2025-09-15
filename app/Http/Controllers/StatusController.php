@@ -39,6 +39,14 @@ class StatusController extends Controller
         try {
             $data = $request->data;
             $data['tenant_id'] = getTenantId();
+            $data['is_default'] = isset($data['is_default']) ? (bool)$data['is_default'] : false;
+
+            // Eğer bu kayıt default seçildiyse, diğerlerini kaldır
+            if (!empty($data['is_default'])) {
+                Status::where('tenant_id', getTenantId())
+                    ->where('is_default', true)
+                    ->update(['is_default' => false]);
+            }
 
             $status = new Status();
             if (!$status->create($data))
@@ -83,6 +91,15 @@ class StatusController extends Controller
         try {
             $data = $request->data;
             $data['tenant_id'] = getTenantId();
+            $data['is_default'] = isset($data['is_default']) ? (bool)$data['is_default'] : false;
+
+            // Bu kayıt default yapılmak isteniyorsa diğerlerinden kaldır
+            if (!empty($data['is_default'])) {
+                Status::where('tenant_id', getTenantId())
+                    ->where('id', '!=', $status->id)
+                    ->where('is_default', true)
+                    ->update(['is_default' => false]);
+            }
             if (!$status->update($data))
                 return back()->withErrors(['msg' => __('validation.custom.record_added_error')]);
 

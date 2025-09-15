@@ -1,31 +1,25 @@
 @extends('frontend.app')
-@section('title', $service->name)
+@section('title', $service->name . ' | AGN Experts')
 @section('description', $service->short_description)
+@section('keywords', $service->name . ', keuring, AGN Experts, België')
+@section('author', 'AGN Experts')
+@section('canonical', route('service.detail', $service->slug))
 @section('image', asset($service->image))
 @section('url', route('service.detail', $service->slug))
 @section('content')
     <main>
-        <div class="it-breadcrumb-area fix p-relative" data-background="assets/img/breadcrumb/breadcrumb-bg.jpg">
-            <div class=it-breadcrumb-shape-1>
-                <img src="assets/img/breadcrumb/breadcrumb-shape.png" alt="">
-            </div>
-            <div class=container>
-                <div class=row>
-                    <div class=col-md-12>
-                        <div class=it-breadcrumb-content>
-                            <div class="it-breadcrumb-title-box mb-25 z-index-3">
-                                <h1 class="it-breadcrumb-title text-white">{{ $service->name }}</h1>
-                            </div>
-                            <div class=it-breadcrumb-list-wrap>
-                                <div class="it-breadcrumb-list z-index-3">
-                                    <span><a href="?page=home">Home</a></span>
-                                    <span class=dvdr>//</span>
-                                    <span><a href="?page=diensten">Diensten</a></span>
-                                    <span class=dvdr>//</span>
-                                    <span><b>{{ $service->name }}</b></span>
-                                </div>
-                            </div>
-                        </div>
+        <div class="simple-header-bg py-5 mb-4">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-10 text-center">
+                        <nav aria-label="breadcrumb" class="mb-2">
+                            <ol class="breadcrumb small justify-content-center bg-transparent p-0 mb-1">
+                                <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
+                                <li class="breadcrumb-item"><a href="{{ route('services') }}">Diensten</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">{{ $service->name }}</li>
+                            </ol>
+                        </nav>
+                        <h1 class="simple-header-title mb-0">{{ $service->name }}</h1>
                     </div>
                 </div>
             </div>
@@ -67,6 +61,18 @@
                                 <img src="{{ asset($service->image) }}" alt="{{ $service->name }}" class="img-fluid">
                             </div>
                             <h2 class=it-sv-details__title>{{ $service->name }}</h2>
+                            
+                            @if($service->regions && count($service->regions) > 0)
+                                <div class="mb-4">
+                                    <h5 class="mb-2">Beschikbaar in:</h5>
+                                    <div class="d-flex flex-wrap gap-2">
+                                        @foreach($service->regions as $region)
+                                            <span class="badge bg-primary">{{ ucfirst($region) }}</span>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
+                            
                             <div class="quill-content">
                                 {!! $service->description !!}
                             </div>

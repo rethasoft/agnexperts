@@ -37,7 +37,12 @@
                         <option value="">Selecteren</option>
                         @foreach ($statuses as $status)
                             <option value="{{ $status->id }}"
-                                {{ $isEdit && $inspection->status_id == $status->id ? 'selected' : '' }}>
+                                @if($isEdit)
+                                    {{ $inspection->status_id == $status->id ? 'selected' : '' }}
+                                @else
+                                    {{ old('status_id') == $status->id ? 'selected' : ($status->is_default ? 'selected' : '') }}
+                                @endif
+                            >
                                 {{ $status->name }}</option>
                         @endforeach
                     </select>

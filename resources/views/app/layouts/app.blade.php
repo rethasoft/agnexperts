@@ -159,8 +159,8 @@
 <!-- <script type="module" src="{{ asset('js/calendar/index.js') }}"></script> -->
 <script src="{{ asset('js/chart.js') }}"></script>
 @stack('scripts')
-<script src="{{ asset('js/cart.js') }}"></script>
 <script src="{{ asset('js/app.js') }}"></script>
+<script src="{{ asset('js/cart.js') }}"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 

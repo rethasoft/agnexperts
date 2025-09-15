@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('short_description')->nullable();
             $table->text('description')->nullable();
             $table->string('image')->nullable();
+            $table->json('regions')->nullable(); // Brussel ve Vlaanderen seçenekleri için
             $table->foreignId('tenant_id')->constrained('users')->onDelete('cascade');
             $table->timestamps();
         });

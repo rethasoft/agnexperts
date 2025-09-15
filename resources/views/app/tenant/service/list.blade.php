@@ -34,6 +34,7 @@
                                 <th width="7%">Image</th>
                                 <th>Naam</th>
                                 <th>Korte Beschrijving</th>
+                                <th>Regio's</th>
                                 <th>Datum</th>
                                 <th></th>
                             </tr>
@@ -45,6 +46,15 @@
                                     <td><img src="{{ asset($service->image) }}" alt="{{ $service->name }}" height="50" class="border rounded"></td>
                                     <td>{{ $service->name }}</td>
                                     <td>{{ Str::limit($service->short_description, 50) }}</td>
+                                    <td>
+                                        @if($service->regions)
+                                            @foreach($service->regions as $region)
+                                                <span class="badge bg-primary me-1">{{ ucfirst($region) }}</span>
+                                            @endforeach
+                                        @else
+                                            <span class="text-muted">Geen regio's</span>
+                                        @endif
+                                    </td>
                                     <td>{{ date('Y-m-d', strtotime($service->created_at)) }}</td>
                                     <td class="text-end">
                                         <form action="{{ route('service.edit', ['service' => $service->id]) }}" class="d-inline-block" method="GET">

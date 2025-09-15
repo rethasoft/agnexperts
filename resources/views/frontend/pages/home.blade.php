@@ -1,9 +1,10 @@
 @extends('frontend.app')
 
-@section('title', 'EPC Certificaat & Keuringen | Professionele Vastgoedkeuringen in België')
+@section('title', 'EPC Attest & Keuringen | Professionele Vastgoedkeuringen in België')
 @section('description', 'Erkend expertisebureau voor EPC certificaten, elektrische keuringen en asbestattesten. ✓ Snelle service ✓ Professioneel advies ✓ Heel België. Vraag nu uw keuring aan!')
 @section('keywords', 'EPC, Keuring, Veiligheid, Expertise')
-@section('author', 'Agnexperts')
+@section('author', 'AGN Experts')
+@section('canonical', route('home'))
 
 
 @section('content')
@@ -22,7 +23,7 @@
                     <div class="it-hero-4-tb p-relative z-index">
                         <div class=it-hero-4-content>
                             <h3 class="it-hero-title wow itfadeUp" data-wow-duration=.9s data-wow-delay=.3s>
-                                UW betrouwbare partner voor al uw keuringen. <br> Van EPC tot <br> Asbestattest en meer 
+                                Gespecialiseerd in EPC, asbest en alle wettelijke keuringen – <br> met zorg en expertise <br>uitgevoerd
                             </h3>
                             {{-- <p class="wow itfadeUp" data-wow-duration=.9s data-wow-delay=.5s>
                                 Erkende specialisten voor EPC certificaten, elektrische keuringen <br>en asbestattesten in heel België.
@@ -75,7 +76,7 @@
                     <div class=it-header-2-top-info>
                         <div class="it-header-2-top-marque d-flex align-items-center justify-content-center">
                             <div class="it-header-2-top-content d-flex align-items-center">
-                                <p>EPC Certificaat</p>
+                                <p>PEB Certificaat</p>
                                 <span>
                                     <svg width=21 height=21 viewBox="0 0 21 21" fill=none xmlns="http://www.w3.org/2000/svg">
                                         <path d="M11.4821 0.18297L10.5151 0.166092L10.1661 20.163L11.1331 20.1799L11.4821 0.18297Z" fill=currentColor />
@@ -90,7 +91,7 @@
                                 </span>
                             </div>
                             <div class="it-header-2-top-content d-flex align-items-center">
-                                <p>Snelle Service</p>
+                                <p>EPC Attest</p>
                                 <span>
                                     <svg width=21 height=21 viewBox="0 0 21 21" fill=none xmlns="http://www.w3.org/2000/svg">
                                         <path d="M11.4821 0.18297L10.5151 0.166092L10.1661 20.163L11.1331 20.1799L11.4821 0.18297Z" fill=currentColor />
@@ -135,7 +136,7 @@
                                 </span>
                             </div>
                             <div class="it-header-2-top-content d-flex align-items-center">
-                                <p>Professionele Service</p>
+                                <p>Gas Keuring</p>
                                 <span>
                                     <svg width=21 height=21 viewBox="0 0 21 21" fill=none xmlns="http://www.w3.org/2000/svg">
                                         <path d="M11.4821 0.18297L10.5151 0.166092L10.1661 20.163L11.1331 20.1799L11.4821 0.18297Z" fill=currentColor />
@@ -197,14 +198,14 @@
                             </div> --}}
                         </div>
                         <div class=it-about-thumb>
-                            <img src="{{ asset('frontend/assets/img/about/about-4-1.jpg') }}" alt="">
+                            <img src="{{ asset('frontend/assets/img/about/epc-and-asbest-inspection-home.jpg') }}" alt="EPC and Asbest inspection">
                         </div>
                     </div>
                 </div>
                 <div class="col-xl-6 col-lg-6">
                     <div class="it-about-content-wrapp wow itfadeRight" data-wow-duration=.9s data-wow-delay=.9s>
                         <div class="it-about-title-box mb-20">
-                            <span class=it-subtitle>about us</span>
+                            <span class=it-subtitle>Over Ons</span>
                             {{-- <h3 class=it-section-title>
                                 EPC, Elektrische keuring en Asbestattest
                             </h3> --}}
@@ -230,7 +231,7 @@
                             <div class=row>
                                 <div class="col-xl-6 col-md-6">
                                     <div class=it-about-item-text>
-                                        <h3 class="it-section-title-sm mb-5">EPC CERTIFICAAT:</h3>
+                                        <h3 class="it-section-title-sm mb-5">EPC Attest:</h3>
                                         <div class=it-about-2-dsc>
                                             <p>Energieprestatiecertificaat voor uw woning of gebouw, verplicht bij verkoop of verhuur van vastgoed.</p>
                                         </div>
@@ -349,7 +350,7 @@
                                 <div class=it-service-3-content>
                                     <span class=it-service-3-categories>Energieprestatie</span>
                                     <h3 class=it-service-3-item-title>
-                                        <a href="?page=epc">EPC Certificaat</a>
+                                        <a href="?page=epc">EPC Attest</a>
                                     </h3>
                                 </div>
                             </div>
@@ -443,7 +444,7 @@
                             <h3 class="it-section-title mb-20">Professionele <span>Keuringen</span> voor uw Vastgoed</h3>
                             <p>Wij bieden complete oplossingen voor al uw vastgoedkeuringen:
                             <ul>
-                                <li>EPC Certificaat - Energieprestatiecertificaat voor uw woning</li>
+                                <li>EPC Attest - Energieprestatiecertificaat voor uw woning</li>
                                 <li>Elektrische Keuring - Conformiteitscontrole van uw elektrische installatie</li>
                                 <li>Asbestattest - Professionele asbestinventarisatie</li>
                             </ul>

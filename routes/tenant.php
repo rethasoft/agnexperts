@@ -89,6 +89,7 @@ Route::middleware('auth')->group(function () {
         Route::get('/deleteFile/{id}', [AjaxController::class, 'deleteFile'])->name('delete.file');
         Route::get('/sendFile/{id}', [AjaxController::class, 'sendFile'])->name('send.file');
         Route::get('/deleteType/{id}/{type_id}', [AjaxController::class, 'deleteType'])->name('delete.type');
+        Route::post('/check-combi-discount', [CombiDiscountController::class, 'checkCombiDiscount'])->name('ajax.check-combi-discount');
     });
 
     // Invoice routes
@@ -101,7 +102,7 @@ Route::middleware('auth')->group(function () {
 
     // Secure File Display Routes
     Route::get('files/{type}/{filename}', [FileController::class, 'show'])
-        ->name('files.show')
+        ->name('tenant.files.show')
         ->where('type', 'invoices|documents')
         ->middleware('signed');
 });

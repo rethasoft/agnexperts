@@ -45,15 +45,15 @@
                             <!-- Status -->
                             <div class="col-md-3">
                                 <div class="d-flex align-items-center p-3 rounded-3"
-                                    style="background: {{ $inspection->status->color }}15">
+                                    style="background: {{ $inspection->status?->color ?? '#e3e6f0' }}15">
                                     <div class="me-3">
-                                        <span class="badge p-2" style="background: {{ $inspection->status->color }}">
+                                        <span class="badge p-2" style="background: {{ $inspection->status?->color ?? '#e3e6f0' }}">
                                             <i class="ri-checkbox-circle-line ri-lg"></i>
                                         </span>
                                     </div>
                                     <div>
                                         <small class="text-muted d-block">Status</small>
-                                        <strong>{{ $inspection->status->name }}</strong>
+                                        <strong>{{ $inspection->status?->name ?? 'Bilinmiyor' }}</strong>
                                     </div>
                                 </div>
                             </div>
@@ -285,26 +285,48 @@
                                         </thead>
                                         <tbody>
                                             @foreach ($inspection->items as $item)
-                                                <tr>
-                                                    <td>{{ $item->name }}</td>
+                                                <tr data-item-id="{{ $item->id }}" data-is-offerte="{{ $item->is_offerte ? 'true' : 'false' }}">
+                                                    <td>
+                                                        {{ $item->name }}
+                                                        @if($item->is_offerte)
+                                                            <br><small class="text-info">Offerte - Prijs wordt opgegeven</small>
+                                                        @endif
+                                                    </td>
                                                     <td>{{ $item->quantity }}</td>
-                                                    <td>€{{ $item->price }}</td>
-                                                    <td class="text-end">€{{ $item->total }}</td>
+                                                    <td class="item-price">
+                                                        @if($item->is_offerte)
+                                                            Offerte
+                                                        @else
+                                                            €{{ number_format($item->price, 2, ',', '.') }}
+                                                        @endif
+                                                    </td>
+                                                    <td class="text-end item-total">
+                                                        @if($item->is_offerte)
+                                                            Offerte
+                                                        @else
+                                                            €{{ number_format($item->total, 2, ',', '.') }}
+                                                        @endif
+                                                    </td>
                                                 </tr>
                                             @endforeach
                                         </tbody>
                                         <tfoot>
-                                            {{-- <tr>
-                                                <td colspan="4" class="text-end fw-bold">Subtotaal: €{{ $inspection->sub_total }}</td>
+                                            @if($inspection->combi_discount_id)
+                                                <tr>
+                                                    <td colspan="4" class="text-end">
+                                                        <div class="mb-1"><span class="fw-normal">Normale prijs:</span> <span class="text-decoration-line-through text-danger" id="normal-price">€{{ number_format($inspection->normal_total + $inspection->combi_discount_amount, 2, ',', '.') }}</span></div>
+                                                        <div class="mb-1"><span class="fw-normal">Combi-korting:</span> <span class="text-success">{{ $inspection->combi_discount_type == 'percentage' ? $inspection->combi_discount_value . '%' : '€' . number_format($inspection->combi_discount_value, 2, ',', '.') }} korting</span></div>
+                                                        <div><span class="fw-normal">Totaal:</span> <span id="final-total">€{{ number_format($inspection->display_total, 2, ',', '.') }}</span></div>
+                                                        <div class="small text-muted mt-1">Combi: <strong>{{ $inspection->combiDiscount?->service_names }}</strong></div>
+                                                    </td>
                                             </tr>
-                                            <tr>
-                                                <td colspan="4" class="text-end fw-bold">BTW: €{{ $inspection->tax }}</td>
-                                            </tr> --}}
+                                            @else
                                             <tr>
                                                 <td colspan="4" class="text-end fw-bold">Totaal:
-                                                    €{{ $inspection->total }}
+                                                        <span id="final-total">€{{ number_format($inspection->display_total, 2, ',', '.') }}</span>
                                                 </td>
                                             </tr>
+                                            @endif
                                         </tfoot>
                                     </table>
                                 </div>
@@ -354,3 +376,64 @@
         </div>
     </div>
 @endsection
+
+<script>
+$(document).ready(function() {
+    // Show sayfasında cart.js mantığını uygula
+    function calculateShowPageTotals() {
+        let normalTotal = 0;
+        let hasOfferte = false;
+        
+        // Her item'ı kontrol et
+        $('tr[data-item-id]').each(function() {
+            const isOfferte = $(this).data('is-offerte');
+            const priceCell = $(this).find('.item-price');
+            const totalCell = $(this).find('.item-total');
+            
+            if (isOfferte) {
+                hasOfferte = true;
+                // Offerte item'lar için "Offerte" göster
+                priceCell.text('Offerte');
+                totalCell.text('Offerte');
+            } else {
+                // Normal item'lar için sayısal değerleri al
+                const priceText = priceCell.text().replace('€', '').replace(',', '.');
+                const totalText = totalCell.text().replace('€', '').replace(',', '.');
+                
+                const price = parseFloat(priceText) || 0;
+                const total = parseFloat(totalText) || 0;
+                
+                normalTotal += total;
+            }
+        });
+        
+        // Toplamları güncelle
+        if (hasOfferte) {
+            console.log('✅ Show sayfası: Offerte item\'lar bulundu, toplam hesaplandı');
+        }
+        
+        // Normal price ve final total'ı güncelle
+        const normalPriceElement = $('#normal-price');
+        const finalTotalElement = $('#final-total');
+        
+        if (normalPriceElement.length > 0) {
+            // Combi discount varsa
+            const combiAmount = {{ $inspection->combi_discount_amount ?? 0 }};
+            const normalPriceWithCombi = normalTotal + combiAmount;
+            normalPriceElement.text('€' + normalPriceWithCombi.toFixed(2).replace('.', ','));
+        }
+        
+        if (finalTotalElement.length > 0) {
+            finalTotalElement.text('€' + normalTotal.toFixed(2).replace('.', ','));
+        }
+        
+        console.log('🧮 Show sayfası toplam hesaplandı:', {
+            normalTotal: normalTotal,
+            hasOfferte: hasOfferte
+        });
+    }
+    
+    // Sayfa yüklendiğinde toplamları hesapla
+    calculateShowPageTotals();
+});
+</script>

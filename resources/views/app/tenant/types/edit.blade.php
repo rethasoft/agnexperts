@@ -34,6 +34,31 @@
                 <div class="card-body">
                     <div class="row mb-3">
                         <div class="col-lg-12">
+                            <label class="form-label">Regio's</label>
+                            <div class="row">
+                                <div class="col-lg-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="regions[]" value="brussel" id="region_brussel"
+                                            {{ in_array('brussel', $dienst->regions ?? []) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="region_brussel">
+                                            Brussel
+                                        </label>
+                                    </div>
+                                </div>
+                                <div class="col-lg-6">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" name="regions[]" value="vlaanderen" id="region_vlaanderen"
+                                            {{ in_array('vlaanderen', $dienst->regions ?? []) ? 'checked' : '' }}>
+                                        <label class="form-check-label" for="region_vlaanderen">
+                                            Vlaanderen
+                                        </label>
+                                    </div>
+                                </div>
+                                                            </div>
+                            </div>
+                        </div>
+                    <div class="row mb-3">
+                        <div class="col-lg-12">
                             <label for="name" class="form-label">Categorie</label>
                             <select name="data[category_id]" id="" class="form-control">
                                 <option value="0"> Selecteren </option>
@@ -69,6 +94,16 @@
                     <div class="row mb-3">
                         <div class="col-lg-12">
                             <div class="form-check form-check-inline">
+                                <input type="hidden" name="data[is_offerte]" id="" value="0" />
+                                <input class="form-check-input" type="checkbox" name="data[is_offerte]" id="is_offerte" value="1"
+                                {{ $dienst->is_offerte == 1 ? 'checked' : '' }}>
+                                <label class="form-check-label" for="is_offerte">Offerte</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-lg-12">
+                            <div class="form-check form-check-inline">
                                 <input type="hidden" name="data[extra]" id="" value="0" />
                                 <input class="form-check-input" type="checkbox" name="data[extra]" data-target="#extra-price" value="1" onclick="toggleExtra(this)"
                                 {{ $dienst->extra == 1 ? 'checked' : '' }}>
@@ -83,6 +118,7 @@
                                 autocomplete="off" value="{{ $dienst->extra_price }}">
                         </div>
                     </div>
+
                     <div class="row">
                         <div class="col-lg-12">
                             <button class="btn btn-success" type="submit">Opslaan</button>
@@ -94,4 +130,5 @@
         </div>
     </div>
 </form>
+
 @endsection

@@ -50,19 +50,34 @@
                                     <tr>
                                         <td>{{ $combi->id }}</td>
                                         <td>
-                                            @foreach(App\Models\Service::whereIn('id', $combi->service_ids)->get() as $service)
-                                                <span class="badge bg-info">{{ $service->name }}</span>
+                                            @foreach(App\Models\Type::whereIn('id', $combi->service_ids)->get() as $type)
+                                                @if($type->category_id && $type->category_id != 0)
+                                                    @php $category = $type->category; @endphp
+                                                    <span class="badge bg-info">{{ $category ? $category->name . ' > ' : '' }}{{ $type->name }}</span>
+                                                @else
+                                                    <span class="badge bg-info">{{ $type->name }}</span>
+                                                @endif
                                             @endforeach
                                         </td>
                                         <td>{{ $combi->discount_type == 'percentage' ? 'Procentueel' : 'Vast bedrag' }}</td>
                                         <td>{{ $combi->discount_value }}</td>
-                                        <td>{{ $combi->active ? 'Ja' : 'Nee' }}</td>
                                         <td>
-                                            <a href="{{ route('combi_discount.edit', $combi->id) }}" class="btn btn-sm btn-warning">Bewerken</a>
+                                            @if($combi->active)
+                                                <span class="badge bg-success">Ja</span>
+                                            @else
+                                                <span class="badge bg-danger">Nee</span>
+                                            @endif
+                                        </td>
+                                        <td class="text-end">
+                                            <a href="{{ route('combi_discount.edit', $combi->id) }}" class="btn btn-sm btn-icon btn-warning" title="Bewerken">
+                                                <i class="ri-pencil-line"></i>
+                                            </a>
                                             <form action="{{ route('combi_discount.destroy', $combi->id) }}" method="POST" style="display:inline-block">
                                                 @csrf
                                                 @method('DELETE')
-                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Weet je zeker dat je wilt verwijderen?')">Verwijderen</button>
+                                                <button type="submit" class="btn btn-sm btn-icon btn-danger" title="Verwijderen" onclick="return confirm('Weet je zeker dat je wilt verwijderen?')">
+                                                    <i class="ri-delete-bin-line"></i>
+                                                </button>
                                             </form>
                                         </td>
                                     </tr>

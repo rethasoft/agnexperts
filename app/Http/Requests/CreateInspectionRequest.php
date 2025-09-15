@@ -56,6 +56,13 @@ class CreateInspectionRequest extends FormRequest
             'items.*.name' => ['required', 'string', 'max:255'],
             'items.*.quantity' => ['required', 'numeric', 'min:1'],
             'items.*.price' => ['required', 'numeric', 'min:0'],
+            'items.*.is_offerte' => ['nullable', 'boolean'],
+            
+            // Combi Discount
+            'combi_discount_id' => ['nullable', 'integer'],
+            'combi_discount_type' => ['nullable', 'string', 'in:percentage,fixed'],
+            'combi_discount_value' => ['nullable', 'numeric', 'min:0'],
+            'combi_discount_amount' => ['nullable', 'numeric', 'min:0'],
         ];
     }
 } 

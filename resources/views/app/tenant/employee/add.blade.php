@@ -98,11 +98,6 @@
                                     <div class="card-body">
                                         <h6 class="mb-3 text-muted">Identification</h6>
                                         <div class="mb-3">
-                                            <label for="national_id" class="form-label">National ID</label>
-                                            <input type="text" id="national_id" name="data[national_id]"
-                                                class="form-control">
-                                        </div>
-                                        <div class="mb-3">
                                             <label for="password" class="form-label">Wachtwoord</label>
                                             <input type="text" id="password" name="data[password]"
                                                 class="form-control" autocomplete="off" required>

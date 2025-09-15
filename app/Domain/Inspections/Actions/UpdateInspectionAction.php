@@ -70,6 +70,10 @@ class UpdateInspectionAction
                 // Additional
                 'inspection_date' => $data->inspection_date,
                 'text' => $data->text,
+                'combi_discount_id' => $data->combi_discount_id,
+                'combi_discount_type' => $data->combi_discount_type,
+                'combi_discount_value' => $data->combi_discount_value,
+                'combi_discount_amount' => $data->combi_discount_amount,
             ]);
 
             // Mevcut öğeleri sil
@@ -84,6 +88,7 @@ class UpdateInspectionAction
                     'quantity' => $item->quantity,
                     'price' => $item->price,
                     'total' => $item->price * $item->quantity,
+                    'is_offerte' => $item->is_offerte ?? false,
                 ]);
             }
 

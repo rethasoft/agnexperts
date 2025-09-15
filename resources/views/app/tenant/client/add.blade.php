@@ -64,49 +64,7 @@
                                         <input type="text" id="btw_number" name="data[btw_number]" class="form-control">
                                     </div>
                                 </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="kvk_number" class="form-label">KVK Nummer</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="ri-file-line"></i></span>
-                                        <input type="text" id="kvk_number" name="data[kvk_number]" class="form-control">
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="industry" class="form-label">Branche</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="ri-briefcase-line"></i></span>
-                                        <select id="industry" name="data[industry]" class="form-control">
-                                            <option value="">Selecteer branche</option>
-                                            <option value="retail">Retail</option>
-                                            <option value="manufacturing">Manufacturing</option>
-                                            <option value="it">IT</option>
-                                            <option value="construction">Bouw</option>
-                                            <option value="healthcare">Zorg</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="company_size" class="form-label">Bedrijfsgrootte</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="ri-team-line"></i></span>
-                                        <select id="company_size" name="data[company_size]" class="form-control">
-                                            <option value="">Selecteer grootte</option>
-                                            <option value="1-10">1-10 werknemers</option>
-                                            <option value="11-50">11-50 werknemers</option>
-                                            <option value="51-200">51-200 werknemers</option>
-                                            <option value="201-500">201-500 werknemers</option>
-                                            <option value="500+">500+ werknemers</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="col-md-6 mb-3">
-                                    <label for="founding_date" class="form-label">Oprichtingsdatum</label>
-                                    <div class="input-group">
-                                        <span class="input-group-text"><i class="ri-calendar-line"></i></span>
-                                        <input type="date" id="founding_date" name="data[founding_date]"
-                                            class="form-control">
-                                    </div>
-                                </div>
+                               
                                 <!-- Personal Information -->
                                 <div class="col-md-6 mb-3">
                                     <label for="username" class="form-label">Naam <span
@@ -157,11 +115,17 @@
                                     </div>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="contact_position" class="form-label">Functie</label>
+                                    <label for="industry" class="form-label">Branche</label>
                                     <div class="input-group">
-                                        <span class="input-group-text"><i class="ri-profile-line"></i></span>
-                                        <input type="text" id="contact_position" name="data[contact_position]"
-                                            class="form-control">
+                                        <span class="input-group-text"><i class="ri-briefcase-line"></i></span>
+                                        <select id="industry" name="data[industry]" class="form-control">
+                                            <option value="">Selecteer branche</option>
+                                            <option value="makelaar">Makelaar</option>
+                                            <option value="architect">Architect</option>
+                                            <option value="bouw">Bouw</option>
+                                            <option value="notaris">Notaris</option>
+                                            <option value="andere">Andere</option>
+                                        </select>
                                     </div>
                                 </div>
                                 <div class="col-md-12 mb-3">

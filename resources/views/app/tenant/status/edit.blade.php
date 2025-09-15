@@ -48,6 +48,15 @@
                         </div>
                     </div>
 
+                    <div class="row mb-3">
+                        <div class="col-lg-12">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_default" name="data[is_default]" value="1" {{ $status->is_default ? 'checked' : '' }}>
+                                <label class="form-check-label" for="is_default">Standaard status</label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row">
                         <div class="col-lg-12">
                             <button class="btn btn-success" type="submit">Opslaan</button>

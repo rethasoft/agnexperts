@@ -3226,7 +3226,7 @@ body.it-magic-cursor #magic-cursor {
   margin-bottom: 25px;
 }
 .it-hero-title {
-  font-size: 80px;
+  font-size: 65px;
   color: var(--it-common-black);
   text-transform: capitalize;
   margin-bottom: 25px;
@@ -7370,12 +7370,12 @@ body.it-magic-cursor #magic-cursor {
   border: 1px solid rgba(90, 90, 90, 0.2);
 }
 .it-contact-input textarea {
-  padding: 0px 30px;
-  height: 58px;
-  line-height: 58px;
-  resize: none;
+  padding: 12px 16px;
+  min-height: 140px;
+  line-height: 1.5;
+  resize: vertical;
   border-radius: 5px;
-  overflow: hidden;
+  overflow: auto;
   border: 1px solid rgba(90, 90, 90, 0.2);
 }
 .it-contact-input.it-shop-input textarea {
@@ -9124,4 +9124,133 @@ p.checkout-coupon input[type=text]:focus {
   font-weight: inherit;
   font-style: inherit;
   text-decoration: inherit;
+}
+
+
+
+/* --- Pricing & Simple Header Styles (from pricing.blade.php) --- */
+.pricing-table-title {
+  background: var(--it-theme-1) !important;
+  color: #fff !important;
+  border-radius: 8px 8px 0 0;
+  font-weight: 600;
+  letter-spacing: 1px;
+}
+.pricing-table-wrapper {
+  box-shadow: 0 4px 24px rgba(0,0,0,0.07);
+  border-radius: 8px;
+  overflow: hidden;
+  background: #fff;
+}
+.table th, .table td {
+  vertical-align: middle;
+  text-align: center;
+}
+.table-bordered th, .table-bordered td {
+  border: 1px solid #e3e6f0;
+}
+.minimal-breadcrumb-bg {
+  background: #f5f7fa !important;
+  border-bottom: 1.5px solid #e3e6f0;
+}
+.minimal-breadcrumb-title {
+  color: #222;
+  font-weight: 700;
+  font-size: 2.1rem;
+  letter-spacing: 0.5px;
+}
+.minimal-breadcrumb-link {
+  color: var(--it-theme-1);
+  font-size: 1.05rem;
+  text-decoration: none;
+}
+.minimal-breadcrumb-link.fw-bold {
+  color: #222;
+}
+.dvdr {
+  color: #b0b0b0;
+}
+.modern-page-header {
+  background: #fff;
+}
+.modern-header-card {
+  background: #f8fafc;
+  border-radius: 18px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.04);
+  border: 1.5px solid #e3e6f0;
+  position: relative;
+  overflow: hidden;
+}
+.modern-header-title {
+  font-size: 2.3rem;
+  font-weight: 800;
+  color: #222;
+  letter-spacing: 0.5px;
+  z-index: 2;
+  position: relative;
+}
+.modern-header-desc {
+  color: #555;
+  font-size: 1.08rem;
+  z-index: 2;
+  position: relative;
+}
+.modern-header-bg-icon {
+  position: absolute;
+  right: 30px;
+  top: 10px;
+  font-size: 5.5rem;
+  color: var(--it-theme-1, #003399);
+  opacity: 0.06;
+  z-index: 1;
+  pointer-events: none;
+}
+.modern-header-card:after {
+  content: '';
+  display: block;
+  height: 3px;
+  width: 60px;
+  background: var(--it-theme-1, #003399);
+  border-radius: 2px;
+  margin: 24px auto 0 auto;
+}
+.breadcrumb {
+  font-size: 0.98rem;
+  color: #888;
+}
+.breadcrumb-item + .breadcrumb-item::before {
+  color: #b0b0b0;
+}
+.breadcrumb-item a {
+  color: var(--it-theme-1);
+  text-decoration: none;
+}
+.breadcrumb-item.active {
+  color: #222;
+  font-weight: 600;
+}
+.simple-header-bg {
+  background: #f7fafd;
+  border-bottom: 1.5px solid #e3e6f0;
+  margin-top: 96px;
+}
+.simple-header-title {
+  color: #222;
+  font-weight: 800;
+  font-size: 2.1rem;
+  letter-spacing: 0.5px;
+}
+@media (max-width: 768px) {
+  .pricing-table-title { font-size: 1.1rem; }
+  .table th, .table td { font-size: 0.95rem; padding: 0.5rem; }
+  .minimal-breadcrumb-title { font-size: 1.2rem; }
+  .it-breadcrumb-content { padding: 20px 0 !important; }
+  .modern-header-title { font-size: 1.3rem; }
+  .modern-header-card { padding: 1.2rem !important; }
+  .modern-header-bg-icon { font-size: 3.2rem; right: 10px; top: 10px; }
+  .alt-header-title { font-size: 1.3rem; }
+  .alt-header-desc { font-size: 1rem; }
+  .alt-page-header { padding: 2rem 0 !important; }
+  .simple-header-title { font-size: 1.2rem; }
+  .simple-header-bg { padding: 18px 0 !important; margin-top: 60px; }
 }

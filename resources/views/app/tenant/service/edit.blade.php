@@ -61,6 +61,24 @@
                                 class="border rounded">
                         </div>
 
+                        <div class="mb-4">
+                            <label class="form-label">Regio's</label>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="regions[]" value="brussel" id="region_brussel"
+                                    {{ in_array('brussel', $service->regions ?? []) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="region_brussel">
+                                    Brussel
+                                </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" name="regions[]" value="vlaanderen" id="region_vlaanderen"
+                                    {{ in_array('vlaanderen', $service->regions ?? []) ? 'checked' : '' }}>
+                                <label class="form-check-label" for="region_vlaanderen">
+                                    Vlaanderen
+                                </label>
+                            </div>
+                            <small class="form-text text-muted">Selecteer de regio's waar deze dienst beschikbaar is.</small>
+                        </div>
 
                         <div class="row">
                             <div class="col-lg-12">

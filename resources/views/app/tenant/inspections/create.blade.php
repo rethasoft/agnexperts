@@ -53,7 +53,7 @@
                                     <div class="col-md-12">
                                         <label class="form-label">Klanten</label>
                                         <select name="client_id" class="form-select">
-                                            <option value="0">Selecteren</option>
+                                            <option value="0" disabled selected>Selecteren</option>
                                             @foreach ($clients as $client)
                                                 <option value="{{ $client->id }}">{{ $client->name . ' ' . $client->surname }}
                                                 </option>
@@ -202,9 +202,9 @@
                             <div class="row g-3">
                                 <div class="col-md-8">
                                     <label class="form-label required">Type keuring</label>
-                                    <select name="type[]" id="types" class="form-select add-to-cart-select">
+                                    <select name="type[]" id="types" class="form-select add-to-cart-select" multiple>
                                         @if (is_object($types))
-                                            <option value="0">Selecteren</option>
+                                            <option value="0" disabled>Selecteren</option>
                                             @foreach ($types as $type)
                                                 @if ($type->subTypes->count() > 0)
                                                     <optgroup label="{{ $type->name }}">
@@ -212,15 +212,13 @@
                                                             @php
                                                                 $subType->category_name = $type->short_name;
                                                             @endphp
-                                                            <option value="{{ $subType->id }}"
-                                                                data-product="{{ $subType }}">
-                                                                {{ $subType->name }}
+                                                            <option value="{{ $subType->id }}" data-product='@json($subType)'>
+                                                                {{ $type->name . ' > ' . $subType->name }}
                                                             </option>
                                                         @endforeach
                                                     </optgroup>
                                                 @else
-                                                    <option value="{{ $type->id }}"
-                                                        data-product="{{ $type }}">
+                                                    <option value="{{ $type->id }}" data-product='@json($type)'>
                                                         {{ $type->name }}
                                                     </option>
                                                 @endif
@@ -247,7 +245,7 @@
                                         </thead>
                                         <tbody></tbody>
                                         <tfoot class="table-light">
-                                            <tr>
+                                            <tr id="cart-total-row">
                                                 <td colspan="6" class="text-end fw-bold" id="cart-total">
                                                     Totaal: €0.00
                                                 </td>
@@ -274,3 +272,17 @@
         </form>
     </div>
 @endsection
+
+@push('scripts')
+<script>
+$(document).ready(function() {
+    $('#types').select2({
+        placeholder: 'Selecteer diensten',
+        allowClear: true,
+        width: '100%',
+        language: 'nl',
+        closeOnSelect: false
+    });
+});
+</script>
+@endpush

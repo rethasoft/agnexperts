@@ -36,7 +36,7 @@ class CombiDiscountController extends Controller
     {
         $data = $request->validate([
             'service_ids' => 'required|array|min:2',
-            'service_ids.*' => 'integer|exists:services,id',
+            'service_ids.*' => 'integer|exists:types,id',
             'discount_type' => 'required|in:percentage,fixed',
             'discount_value' => 'required|numeric|min:0',
             'active' => 'nullable',
@@ -62,7 +62,7 @@ class CombiDiscountController extends Controller
     {
         $data = $request->validate([
             'service_ids' => 'required|array|min:2',
-            'service_ids.*' => 'integer|exists:services,id',
+            'service_ids.*' => 'integer|exists:types,id',
             'discount_type' => 'required|in:percentage,fixed',
             'discount_value' => 'required|numeric|min:0',
             'active' => 'nullable',
@@ -78,6 +78,35 @@ class CombiDiscountController extends Controller
     public function destroy($id)
     {
         $this->repository->delete($id);
+        if (request()->is('app/tenant/*')) {
+            return redirect()->route('combi_discount.index')->with('success', 'Combi-korting succesvol verwijderd!');
+        }
         return redirect()->route('admin.combi_discounts.index')->with('success', 'Combi indirim silindi!');
+    }
+
+    public function checkCombiDiscount(Request $request)
+    {
+        $serviceIds = $request->input('service_ids', []);
+        if (!is_array($serviceIds) || count($serviceIds) < 2) {
+            return response()->json(['has_combi' => false]);
+        }
+
+        
+        $combi = \App\Domain\Inspections\Models\CombiDiscount::where('active', true)
+            ->get()
+            ->first(function ($item) use ($serviceIds) {
+                // Daha esnek: combi tanımındaki tüm hizmetler seçiliyse (fazladan başka hizmet de olsa) indirim uygula
+                return empty(array_diff($item->service_ids, $serviceIds));
+            });
+        if ($combi) {
+            return response()->json([
+                'has_combi' => true,
+                'discount_type' => $combi->discount_type,
+                'discount_value' => $combi->discount_value,
+                'combi_id' => $combi->id,
+                'service_ids' => $combi->service_ids,
+            ]);
+        }
+        return response()->json(['has_combi' => false]);
     }
 } 

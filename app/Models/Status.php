@@ -9,7 +9,16 @@ use Illuminate\Support\Facades\Auth;
 class Status extends Model
 {
     use HasFactory;
-    protected $fillable = ['tenant_id', 'name', 'color'];
+    protected $fillable = ['tenant_id', 'name', 'color', 'is_default'];
+
+    protected $casts = [
+        'is_default' => 'boolean',
+    ];
+
+    public function scopeDefault($query)
+    {
+        return $query->where('is_default', true);
+    }
 
     protected static function boot()
     {

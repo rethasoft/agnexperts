@@ -65,7 +65,7 @@
                                         <div class="col-md-12">
                                             <label class="form-label">Klanten</label>
                                             <select name="client_id" class="form-select" required>
-                                                <option value="">Selecteren</option>
+                                                <option value="0" disabled selected>Selecteren</option>
                                                 @foreach ($clients as $client)
                                                     <option value="{{ $client->id }}"
                                                         {{ $inspection->client_id == $client->id ? 'selected' : '' }}>
@@ -212,9 +212,9 @@
                                 <div class="row g-3">
                                     <div class="col-auto">
                                         <label class="form-label">Type keuring</label>
-                                        <select name="type[]" id="types" class="form-select add-to-cart-select">
+                                        <select name="type[]" id="types" class="form-select add-to-cart-select" multiple>
                                             @if (is_object($types))
-                                                <option value="">Selecteren</option>
+                                                <option value="0" disabled>Selecteren</option>
                                                 @foreach ($types as $type)
                                                     @if ($type->subTypes->count() > 0)
                                                         <optgroup label="{{ $type->name }}">
@@ -226,10 +226,8 @@
                                                                         json_decode($inspection->type ?? '[]'),
                                                                     );
                                                                 @endphp
-                                                                <option value="{{ $subType->id }}"
-                                                                    data-product="{{ $subType }}"
-                                                                    {{ $isSelected ? 'selected' : '' }}>
-                                                                    {{ $subType->name }}
+                                                                <option value="{{ $subType->id }}" data-product='@json($subType)'>
+                                                                    {{ $type->name . ' > ' . $subType->name }}
                                                                 </option>
                                                             @endforeach
                                                         </optgroup>
@@ -240,9 +238,7 @@
                                                                 json_decode($inspection->type ?? '[]'),
                                                             );
                                                         @endphp
-                                                        <option value="{{ $type->id }}"
-                                                            data-product="{{ $type }}"
-                                                            {{ $isSelected ? 'selected' : '' }}>
+                                                        <option value="{{ $type->id }}" data-product='@json($type)'>
                                                             {{ $type->name }}
                                                         </option>
                                                     @endif
@@ -271,7 +267,7 @@
                                                 <!-- JavaScript ile doldurulacak -->
                                             </tbody>
                                             <tfoot class="table-light">
-                                                <tr>
+                                                <tr id="cart-total-row">
                                                     <td colspan="6" class="text-end fw-bold" id="cart-total">
                                                         Totaal: €0.00
                                                     </td>
@@ -419,6 +415,39 @@
             <script>
                 // PHP'den alınan veriyi JSON formatında JavaScript'e aktar
                 const existingCartData = @json($inspection->items);
+                
+                // Mevcut combi discount verilerini JavaScript'e aktar
+                @php
+                    $combiDiscountData = null;
+                    if ($inspection->combiDiscount) {
+                        $combiDiscountData = [
+                            'has_combi' => true,
+                            'combi_discount_id' => $inspection->combiDiscount->id,
+                            'combi_discount_type' => $inspection->combiDiscount->discount_type,
+                            'combi_discount_value' => $inspection->combiDiscount->discount_value,
+                            'combi_discount_amount' => $inspection->combiDiscount->discount_amount
+                        ];
+                    }
+                @endphp
+                const existingCombiDiscount = @json($combiDiscountData);
+
+                console.log(existingCombiDiscount);
+            </script>
+            <script>
+$(document).ready(function() {
+    $('#types').select2({
+        placeholder: 'Selecteer diensten',
+        allowClear: true,
+        width: '100%',
+        language: 'nl',
+        closeOnSelect: false
+    });
+    
+    // Mevcut cart verilerini yükle
+    if (typeof existingCartData !== 'undefined' && existingCartData.length > 0) {
+        cart.initializeFromExistingData(existingCartData);
+    }
+});
             </script>
         @endpush
     @endsection

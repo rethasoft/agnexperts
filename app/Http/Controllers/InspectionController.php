@@ -147,7 +147,7 @@ class InspectionController extends Controller
             return redirect()
                 ->route('tenant.inspections.create')
                 ->withInput($request->all())
-                ->withErrors('An unexpected error occurred.');
+                ->withErrors('Hata: ' . $e->getMessage());
         }
     }
 
@@ -163,7 +163,8 @@ class InspectionController extends Controller
     public function edit(Inspection $inspection)
     {
         abort_if(!$inspection->userHasAccess(), 403, 'U heeft geen toegang tot deze inspectie.');
-        $inspection->load(['client', 'employee', 'items', 'items.category']);
+
+        $inspection->load(['client', 'employee', 'items', 'items.category', 'combiDiscount']);
         $clients = Client::all();
         $provinces = Province::all();
         $types = Type::all();

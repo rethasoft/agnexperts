@@ -45,8 +45,28 @@
                             <div class="col-md-12">
                                 <label for="service_ids" class="form-label">Diensten (meerdere selecteren mogelijk)</label>
                                 <select name="service_ids[]" id="service_ids" class="form-select" multiple required>
-                                    @foreach(App\Models\Service::all() as $service)
-                                        <option value="{{ $service->id }}">{{ $service->name }}</option>
+                                    @php
+                                        $types = App\Models\Type::all();
+                                        $mainTypes = $types->where('category_id', 0);
+                                    @endphp
+                                    @foreach($mainTypes as $mainType)
+                                        @php
+                                            $subTypes = $types->where('category_id', $mainType->id);
+                                        @endphp
+                                        @if($subTypes->count() > 0)
+                                            <optgroup label="{{ $mainType->name }}">
+                                                @foreach($subTypes as $subType)
+                                                    @php
+                                                        $category = $mainType;
+                                                    @endphp
+                                                    <option value="{{ $subType->id }}">
+                                                        {{ $category->name . ' > ' . $subType->name }}
+                                                    </option>
+                                                @endforeach
+                                            </optgroup>
+                                        @else
+                                            <option value="{{ $mainType->id }}">{{ $mainType->name }}</option>
+                                        @endif
                                     @endforeach
                                 </select>
                                 <small class="text-muted">Gebruik Ctrl (Windows) of Cmd (Mac) voor meerdere selectie.</small>
@@ -80,4 +100,16 @@
         </div>
     </form>
 </div>
-@endsection 
+@endsection
+@push('scripts')
+<script>
+$(document).ready(function() {
+    $('#service_ids').select2({
+        placeholder: 'Selecteer diensten',
+        width: '100%',
+        language: 'nl',
+        closeOnSelect: false
+    });
+});
+</script>
+@endpush 

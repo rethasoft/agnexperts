@@ -66,6 +66,12 @@ class Inspection extends Model
         'paid',
         'payment_status',
 
+        // Combi indirim alanları
+        'combi_discount_id',
+        'combi_discount_type',
+        'combi_discount_value',
+        'combi_discount_amount',
+
         // Additional information
         'inspection_date',
         'text',
@@ -80,6 +86,10 @@ class Inspection extends Model
         'sub_total' => 'float',
         'inspection_date' => 'datetime',
         'source' => InspectionSource::class,
+        // Combi indirim alanları
+        'combi_discount_id' => 'integer',
+        'combi_discount_value' => 'float',
+        'combi_discount_amount' => 'float',
     ];
 
     // Scopes
@@ -207,6 +217,35 @@ class Inspection extends Model
     public function province()
     {
         return $this->hasOne(Province::class, 'id', 'province_id');
+    }
+
+    public function combiDiscount()
+    {
+        return $this->belongsTo(CombiDiscount::class);
+    }
+
+    // Get total excluding offerte items
+    public function getNormalTotalAttribute(): float
+    {
+        return $this->items()
+            ->where('is_offerte', false)
+            ->get()
+            ->sum(function($item) {
+                return $item->total ?? ($item->price * $item->quantity);
+            });
+    }
+
+    // Get total including offerte items (for display purposes)
+    public function getDisplayTotalAttribute(): float
+    {
+        return $this->items()
+            ->get()
+            ->sum(function($item) {
+                if ($item->is_offerte) {
+                    return 0; // Offerte items don't contribute to total
+                }
+                return $item->total ?? ($item->price * $item->quantity);
+            });
     }
 
     public function getFormattedAddressAttribute()

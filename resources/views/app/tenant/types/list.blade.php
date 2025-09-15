@@ -35,6 +35,7 @@
                                 <th>Korte Naam</th>
                                 <th>Prijs</th>
                                 <th>Extra Prijs</th>
+                                <th>Regio's</th>
                                 <th>Datum</th>
                                 <th></th>
                             </tr>
@@ -47,6 +48,15 @@
                                     <td>{{ $item->short_name }}</td>
                                     <td>{{ $item->formatted_price }}</td>
                                     <td>{{ $item->formatted_extra_price }}</td>
+                                    <td>
+                                        @if($item->regions)
+                                            @foreach($item->regions as $region)
+                                                <span class="badge bg-primary me-1">{{ ucfirst($region) }}</span>
+                                            @endforeach
+                                        @else
+                                            <span class="text-muted">Geen regio's</span>
+                                        @endif
+                                    </td>
                                     <td>{{ date('Y-m-d', strtotime($item->created_at)) }}</td>
                                     <td>
                                         <form action="{{ route('dienst.edit', ['dienst' => $item->id]) }}" class="d-inline-block" method="GET">
@@ -70,6 +80,15 @@
                                         <td>{{ $type->short_name }}</td>
                                         <td>{{ $type->formatted_price }}</td>
                                         <td>{{ $type->formatted_extra_price }}</td>
+                                        <td>
+                                            @if($type->regions)
+                                                @foreach($type->regions as $region)
+                                                    <span class="badge bg-primary me-1">{{ ucfirst($region) }}</span>
+                                                @endforeach
+                                            @else
+                                                <span class="text-muted">Geen regio's</span>
+                                            @endif
+                                        </td>
                                         <td>{{ date('Y-m-d', strtotime($type->created_at)) }}</td>
                                         <td>
                                             <form action="{{ route('dienst.edit', ['dienst' => $type->id]) }}" class="d-inline-block" method="GET">
@@ -91,7 +110,7 @@
                                 @endforeach
                             @else
                             <tr>
-                                <td colspan="7">
+                                <td colspan="8">
                                     <div class="alert alert-danger mb-0">{{ __('validation.custom.no_data') }}</div>
                                 </td>
                             </tr>

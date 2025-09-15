@@ -45,6 +45,14 @@ class ServiceController extends Controller
     {
         try {
             $data = $request->data;
+            
+            // Handle regions checkbox data
+            $regions = [];
+            if ($request->has('regions')) {
+                $regions = $request->regions;
+            }
+            $data['regions'] = $regions;
+            
             if ($request->hasFile('image')) {
                 $data['image'] = $this->handleImageUpload($request->file('image'), $data['name']);
             }
@@ -86,6 +94,14 @@ class ServiceController extends Controller
     {
         try {
             $data = $request->data;
+            
+            // Handle regions checkbox data
+            $regions = [];
+            if ($request->has('regions')) {
+                $regions = $request->regions;
+            }
+            $data['regions'] = $regions;
+            
             if ($request->hasFile('image')) {
                 $data['image'] = $this->handleImageUpload($request->file('image'), $data['name']);
             }
@@ -106,6 +122,19 @@ class ServiceController extends Controller
             return redirect()->route('service.index')->with('success', 'Dienst verwijderd');
         } catch (\Exception $e) {
             return redirect()->back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Get services by region
+     */
+    public function getServicesByRegion($region)
+    {
+        try {
+            $services = Service::whereJsonContains('regions', $region)->get();
+            return response()->json($services);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
         }
     }
 

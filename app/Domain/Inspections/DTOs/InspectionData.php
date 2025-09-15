@@ -28,7 +28,7 @@ class InspectionData
         public ?string $province,
         public ?int $province_id,
         // Billing Address
-        public bool $has_billing_address = false,
+        public ?bool $has_billing_address = false,
         public ?string $billing_street = null,
         public ?string $billing_number = null,
         public ?string $billing_box = null,
@@ -47,6 +47,10 @@ class InspectionData
         /** @var InspectionItemData[] */
         public array $items = [],
         public readonly InspectionSource $source,
+        public ?int $combi_discount_id = null,
+        public ?string $combi_discount_type = null,
+        public ?float $combi_discount_value = null,
+        public ?float $combi_discount_amount = null,
     ) {}
 
     public static function fromRequest(CreateInspectionRequest|UpdateInspectionRequest $request): self
@@ -57,7 +61,9 @@ class InspectionData
                 type_id: $item['type_id'],
                 name: $item['name'],
                 quantity: $item['quantity'],
-                price: $item['price']
+                price: $item['price'],
+                total: $item['total'] ?? null,
+                is_offerte: $item['is_offerte'] ?? false
             );
         })->toArray();
 
@@ -90,7 +96,7 @@ class InspectionData
             city: $request->city,
             province: $request->province,
             province_id: $request->province_id,
-            has_billing_address: $request->has_billing_address,
+            has_billing_address: !$request->has_billing_address, // Checkbox logic: checked = same address (false), unchecked = different address (true)
             billing_street: $request->billing_street,
             billing_number: $request->billing_number,
             billing_box: $request->billing_box,
@@ -106,6 +112,10 @@ class InspectionData
             status_id: $request->status_id ?? 0,
             items: $items,
             source: $source,
+            combi_discount_id: $request->combi_discount_id,
+            combi_discount_type: $request->combi_discount_type,
+            combi_discount_value: $request->combi_discount_value,
+            combi_discount_amount: $request->combi_discount_amount,
         );
     }
 }

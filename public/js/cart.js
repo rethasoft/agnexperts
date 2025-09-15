@@ -7,7 +7,7 @@ class Cart {
         this.stepCount = 5;
         // Mevcut verileri yükle
         if (typeof existingCartData !== 'undefined') {
-            console.log("Mevcut veriler yükleniyor:", existingCartData);
+            console.log(existingCartData);
             existingCartData.forEach(detail => {
                 this.cart.push({
                     id: detail.type_id,
@@ -15,7 +15,8 @@ class Cart {
                     name: detail.name,
                     quantity: detail.quantity,
                     price: detail.price,
-                    total: detail.price * detail.quantity
+                    total: detail.price * detail.quantity,
+                    is_offerte: detail.is_offerte || false
                 });
 
                 // Tabloyu güncelle
@@ -27,13 +28,13 @@ class Cart {
                 row.innerHTML = `
                     <td><button type="button" class="btn btn-sm btn-danger" onclick="deleteCartProduct(${detail.type_id}, true)">X</button></td>
                     <td>${detail.type_id}</td>
-                    <td>${detail.category ? detail.category.name + ' > ' + detail.name : detail.name}</td>
+                    <td>${detail.category ? detail.category.name + ' > ' + detail.name : detail.name}${detail.is_offerte ? '<br><small class="text-info">Offerte - Prijs wordt opgegeven</small>' : ''}</td>
                     <td data-id="${detail.type_id}" class="data-quantity">
-                        <input type="number" class="cart-counter" value="${detail.quantity}" 
+                        <input type="number" class="cart-counter" value="${detail.quantity}" min="1"
                                onchange="changeQuantity(this)" style="width:60px;text-align:center;"/>
                     </td>
-                    <td class="price">€${detail.price}</td>
-                    <td data-id="${detail.type_id}" class="data-total text-end">€${(detail.price * detail.quantity)}</td>
+                    <td class="price">${detail.is_offerte ? 'Offerte' : '€' + detail.price}</td>
+                    <td data-id="${detail.type_id}" class="data-total text-end">${detail.is_offerte ? 'Offerte' : '€' + (detail.price * detail.quantity)}</td>
                 `;
 
                 this.cartTableBody.appendChild(row);
@@ -50,6 +51,22 @@ class Cart {
         this.exclTotal = 0;
         this.btw = 21;
         this.total = 0;
+        
+        // Combi discount özellikleri
+        this.combiDiscount = null;
+        this.combiDiscountId = null;
+        this.combiDiscountType = null;
+        this.combiDiscountValue = null;
+        this.combiDiscountAmount = null;
+        
+        // Edit sayfasında mevcut combi discount verilerini yükle
+        if (typeof existingCombiDiscount !== 'undefined') {
+            this.combiDiscount = existingCombiDiscount;
+            this.combiDiscountId = existingCombiDiscount.combi_discount_id;
+            this.combiDiscountType = existingCombiDiscount.combi_discount_type;
+            this.combiDiscountValue = existingCombiDiscount.combi_discount_value;
+            this.combiDiscountAmount = existingCombiDiscount.combi_discount_amount;
+        }
 
         // buttons
         this.previous = document.getElementById('previous-button');
@@ -60,9 +77,29 @@ class Cart {
     }
 
     initializeFromExistingData(existingData) {
+        
+        // initializeFromExistingData çağrıldı
+        
         // Önce tabloyu temizle
         this.cartTableBody.innerHTML = '';
 
+        this.cart = [];
+        
+        // Combi discount verilerini yeniden yükle (cart temizlendiği için)
+        if (typeof existingCombiDiscount !== 'undefined' && existingCombiDiscount !== null) {
+            // existingCombiDiscount tanımlı, yükleniyor
+            this.combiDiscount = existingCombiDiscount;
+            this.combiDiscountId = existingCombiDiscount.combi_discount_id;
+            this.combiDiscountType = existingCombiDiscount.combi_discount_type;
+            this.combiDiscountValue = existingCombiDiscount.combi_discount_value;
+            this.combiDiscountAmount = existingCombiDiscount.combi_discount_amount;
+            
+            console.log('🎉 Combi discount yüklendi:', this.combiDiscount);
+        } else {
+            // existingCombiDiscount tanımlı değil
+            console.log('❌ existingCombiDiscount bulunamadı');
+        }
+        
         existingData.forEach(item => {
             // Cart'a ekle
             this.cart.push(item);
@@ -73,16 +110,32 @@ class Cart {
             row.classList.add('service-row');
             row.dataset.id = item.id;
 
+            // Offerte servislerde total "Offerte", normal servislerde mevcut total kullan
+            let displayTotal;
+            if (item.is_offerte) {
+                displayTotal = 'Offerte';
+                // Offerte item için total "Offerte" olarak ayarlandı
+            } else {
+                // item.total veya (item.price * item.quantity) undefined olabilir, kontrol et
+                const totalValue = item.total || (item.price * item.quantity);
+                if (totalValue !== undefined && totalValue !== null && !isNaN(totalValue)) {
+                    displayTotal = '€' + parseFloat(totalValue).toFixed(2);
+                } else {
+                    console.warn('⚠️ Item total hesaplanamadı:', item);
+                    displayTotal = '€0.00';
+                }
+            }
+
             row.innerHTML = `
                 <td><button type="button" class="btn btn-sm btn-danger" onclick="deleteCartProduct(${item.id}, true)">X</button></td>
                 <td>${item.id}</td>
-                <td>${item.name}</td>
+                <td>${item.name}${item.is_offerte ? '<br><small class="text-info">Offerte - Prijs wordt opgegeven</small>' : ''}</td>
                 <td data-id="${item.id}" class="data-quantity">
-                    <input type="number" class="cart-counter" value="${item.quantity}" 
-                           onchange="changeQuantity(this)" style="width:60px;text-align:center;"/>
+                    <input type="number" class="cart-counter" value="${item.quantity}" min="1"
+                           onchange="changeQuantity(this)" style="width:60px;text-align-center;" ${item.is_offerte ? 'disabled' : ''}/>
                 </td>
-                <td class="price">€${item.price.toFixed(2)}</td>
-                <td data-id="${item.id}" class="data-total text-end">€${(item.price * item.quantity).toFixed(2)}</td>
+                <td class="price">${item.is_offerte ? 'Offerte' : '€' + (item.price !== undefined && item.price !== null && !isNaN(item.price) ? parseFloat(item.price).toFixed(2) : '0.00')}</td>
+                <td data-id="${item.id}" class="data-total text-end">${displayTotal}</td>
             `;
 
             this.cartTableBody.appendChild(row);
@@ -92,6 +145,10 @@ class Cart {
             this.cartDiv.classList.remove('d-none');
             this.calculateCartTotal();
             this.finish();
+            
+            // Combi discount kontrolü yap
+            // Combi discount kontrolü yapılıyor
+            this.checkCombiDiscountAfterCartChange();
         }
     }
 
@@ -108,13 +165,39 @@ class Cart {
             this.cart.push(product);
             row.setAttribute('id', 'item-' + product.id);
 
+            // Calculate initial total with extra price logic
+            let initialTotal;
+            if (product.is_offerte) {
+                // Offerte servislerde total 0
+                initialTotal = 0;
+            } else if ((product.extra == 1 || product.extra === true) && product.quantity > 1 && product.extra_price) {
+                // İlk ürün normal fiyat, sonraki ürünler extra fiyat
+                // product.price ve product.extra_price string olabilir, parseFloat ile sayıya çevir
+                const price = parseFloat(product.price) || 0;
+                const extraPrice = parseFloat(product.extra_price) || 0;
+                const quantity = parseInt(product.quantity) || 1;
+                initialTotal = (price * 1) + ((quantity - 1) * extraPrice);
+            } else {
+                // Normal fiyat hesaplaması
+                // product.price string olabilir, parseFloat ile sayıya çevir
+                const price = parseFloat(product.price) || 0;
+                const quantity = parseInt(product.quantity) || 1;
+                initialTotal = quantity * price;
+            }
+
+            // Set the total in the product object
+            // product.total = initialTotal;
+            product.total = initialTotal;
+            
+
+
             row.innerHTML = `
             <td><button type="button" class="btn btn-sm btn-danger" onclick="deleteCartProduct(${product.id}, true)">X</button></td>
             <td>${product.id}</td>
-            <td>${product.category_name && product.category_name != '' ? product.category_name + ' > ' : ''} ${product.name}</td>
-            <td data-id="${product.id}" class="data-quantity"><input type="number" class="cart-counter" value="${product.quantity}" onchange="changeQuantity(this)" style="width:60px;text-align:center;"/></td>
-            <td>€${product.price}</td>
-            <td data-id="${product.id}" class="data-total text-end">€${product.quantity * product.price}</td>
+            <td>${product.category_name && product.category_name != '' ? product.category_name + ' > ' : ''} ${product.name}${product.is_offerte ? '<br><small class="text-info">Offerte - Prijs wordt opgegeven</small>' : ''}</td>
+            <td data-id="${product.id}" class="data-quantity"><input type="number" class="cart-counter" value="${product.quantity}" min="1" onchange="changeQuantity(this)" style="width:60px;text-align-center;"/></td>
+            <td>${product.is_offerte ? 'Offerte' : '€' + (product.price !== undefined && product.price !== null ? parseFloat(product.price).toFixed(2) : '0.00')}</td>
+            <td data-id="${product.id}" class="data-total text-end">${product.is_offerte ? 'Offerte' : '€' + (initialTotal !== undefined && initialTotal !== null ? parseFloat(initialTotal).toFixed(2) : '0.00')}</td>
             `;
             this.cartTableBody.append(row);
         }
@@ -128,12 +211,21 @@ class Cart {
 
         // get total
         this.calculateCartTotal();
+        
+        // Combi discount kontrolü yap
+        this.checkCombiDiscountAfterCartChange();
     }
 
     update(index, additionalQuantity) {
 
         // Update quantity and total based on additional quantity
         this.cart[index].quantity += additionalQuantity;
+        
+        // Minimum değer kontrolü
+        if (this.cart[index].quantity < 1) {
+            this.cart[index].quantity = 1;
+        }
+        
         this.cart[index].total = this.calculateTotal(this.cart[index]);
 
         const _cart = this.cart[index];
@@ -143,7 +235,16 @@ class Cart {
 
         if (findTotal && findQuantity) {
             findQuantity.value = _cart.quantity;
-            findTotal.innerHTML = '€' + _cart.total;
+            if (_cart.is_offerte) {
+                findTotal.innerHTML = 'Offerte';
+            } else {
+                // _cart.total undefined olabilir, kontrol et
+                if (_cart.total !== undefined && _cart.total !== null) {
+                    findTotal.innerHTML = '€' + parseFloat(_cart.total).toFixed(2);
+                } else {
+                    findTotal.innerHTML = '€0.00';
+                }
+            }
         }
         // log
         // console.log(`Quantity updated for item with id ${this.cart[index].id}. New total: ${this.cart[index].total}`);
@@ -182,6 +283,10 @@ class Cart {
             });
 
             this.calculateCartTotal();
+            
+            // Combi discount kontrolü yap
+            this.checkCombiDiscountAfterCartChange();
+            
             return true;
         } else {
             return false;
@@ -189,30 +294,197 @@ class Cart {
     }
 
     calculateTotal(product) {
-
+        // If product is offerte, return 0
+        if (product.is_offerte) {
+            return 0;
+        }
+        
+        // product.price undefined olabilir, kontrol et
+        if (product.price === undefined || product.price === null) {
+            console.warn('⚠️ Product price undefined:', product);
+            return 0;
+        }
+        
         const existingProductIndex = this.cart.findIndex(item => parseInt(item.id) === parseInt(product.id));
         if (existingProductIndex !== -1) {
-            if (product.extra == 1 && this.cart[existingProductIndex].quantity > 1) {
-                console.log((product.price * 1));
-                console.log(this.cart[existingProductIndex].quantity - 1 * product.extra_price);
+            if ((product.extra == 1 || product.extra === true) && this.cart[existingProductIndex].quantity > 1 && product.extra_price) {
+                // İlk ürün normal fiyat, sonraki ürünler extra fiyat
                 return (product.price * 1) + ((this.cart[existingProductIndex].quantity - 1) * product.extra_price);
             }
             return product.quantity * product.price;
         }
+        return product.quantity * product.price;
     }
+
     calculateCartTotal() {
+        console.log(this.cart);
         if (this.cart.length > 0) {
             let total = 0;
             this.cart.forEach((item) => {
-                total += item.quantity * item.price;
+                // If item is offerte, don't add to total
+                if (!item.is_offerte) {
+                    // Her satırın kendi total değerini kullan
+                    // Bu değer zaten extra fiyat mantığına göre hesaplanmış
+                    if (item.total !== undefined && item.total !== null) {
+                        // item.total string olabilir, parseFloat ile sayıya çevir
+                        total += parseFloat(item.total) || 0;
+                    } else if (item.price !== undefined && item.price !== null && item.quantity !== undefined && item.quantity !== null) {
+                        // item.price ve item.quantity string olabilir, parseFloat ile sayıya çevir
+                        total += (parseFloat(item.price) || 0) * (parseFloat(item.quantity) || 0);
+                    } else {
+                        console.warn('⚠️ Item has missing price or quantity:', item);
+                    }
+                }
             });
 
             this.exclTotal = total / 1.21;
             this.total = total;
             this.btw = this.total - this.exclTotal;
+        
 
-            // Ana toplam gösterimini güncelle
-            document.getElementById('cart-total').textContent = 'Totaal: €' + this.total.toFixed(2);
+            // Combi discount varsa uygula
+            if (this.combiDiscount && this.combiDiscount.has_combi) {
+                let discountedTotal = this.total;
+                if (this.combiDiscount.discount_type === 'percentage') {
+                    discountedTotal = this.total * (1 - this.combiDiscount.discount_value / 100);
+                } else {
+                    discountedTotal = this.total - this.combiDiscount.discount_value;
+                }
+                if (discountedTotal < 0) discountedTotal = 0;
+                
+                // Combi discount değerlerini kaydet!
+                this.combiDiscountId = this.combiDiscount.combi_id;
+                this.combiDiscountType = this.combiDiscount.discount_type;
+                this.combiDiscountValue = this.combiDiscount.discount_value;
+                this.combiDiscountAmount = (this.total - discountedTotal).toFixed(2);
+                
+                // Ana toplam gösterimini güncelle (combi discount ile)
+                this.updateCartTotalDisplay(discountedTotal, true);
+            } else {
+                // Ana toplam gösterimini güncelle (normal)
+                this.updateCartTotalDisplay(this.total, false);
+            }
+        }
+    }
+    
+    updateCartTotalDisplay(total, hasCombiDiscount = false) {
+        const cartTotalElement = document.getElementById('cart-total');
+        if (!cartTotalElement) return;
+        
+        if (hasCombiDiscount) {
+            let html = '<div class="text-end">';
+            html += '<div><span class="fw-normal">Normale prijs:</span> <span class="text-decoration-line-through text-danger">€' + (this.total !== undefined && this.total !== null ? parseFloat(this.total).toFixed(2) : '0.00') + '</span></div>';
+            html += '<div><span class="fw-normal">Combi-korting:</span> <span class="text-success">';
+            if (this.combiDiscount.discount_type === 'percentage') {
+                html += this.combiDiscount.discount_value + '%';
+            } else {
+                html += '€' + (this.combiDiscount.discount_value !== undefined && this.combiDiscount.discount_value !== null ? parseFloat(this.combiDiscount.discount_value).toFixed(2) : '0.00');
+            }
+            html += ' korting</span></div>';
+            html += '<div><span class="fw-normal">Totaal:</span> <span>€' + (total !== undefined && total !== null ? parseFloat(total).toFixed(2) : '0.00') + '</span></div>';
+            html += '</div>';
+            cartTotalElement.innerHTML = html;
+        } else {
+            cartTotalElement.innerHTML = '<span class="fw-bold">Totaal: €' + (total !== undefined && total !== null ? parseFloat(total).toFixed(2) : '0.00') + '</span>';
+        }
+    }
+    
+    checkCombiDiscount(selectedServiceIds) {
+        
+        console.log('🔍 checkCombiDiscount çağrıldı, selectedServiceIds:', selectedServiceIds);
+        
+        if (selectedServiceIds.length < 2) {
+            // Eğer mevcut combi discount varsa ve edit sayfasındaysak, silme
+            if (this.combiDiscount && this.combiDiscount.has_combi && typeof existingCombiDiscount !== 'undefined') {
+                // Edit sayfasında mevcut combi discount korunuyor
+                return;
+            }
+            
+            console.log('🗑️ Combi discount temizleniyor');
+            this.combiDiscount = null;
+            this.combiDiscountId = null;
+            this.combiDiscountType = null;
+            this.combiDiscountValue = null;
+            this.combiDiscountAmount = null;
+            this.calculateCartTotal();
+            return;
+        }
+        
+        // Mevcut combi discount varsa ve edit sayfasındaysak, yeni AJAX yapma
+        if (this.combiDiscount && this.combiDiscount.has_combi) {
+            // Edit sayfasında mevcut combi discount korunuyor, AJAX yapılmıyor
+            // Mevcut combi discount ile toplam hesapla
+            this.calculateCartTotal();
+            return;
+        }
+        
+        // AJAX ile combi discount kontrol ediliyor
+        console.log('📡 AJAX ile combi discount kontrol ediliyor...');
+        $.ajax({
+            url: '/app/tenant/ajax/check-combi-discount',
+            type: 'POST',
+            data: {
+                service_ids: selectedServiceIds,
+                _token: document.querySelector('meta[name=csrf-token]').getAttribute('content')
+            },
+            success: (response) => {
+                // AJAX yanıtı alındı
+                this.combiDiscount = response;
+                if (response.has_combi) {
+                    // Combi discount bulundu
+                    this.combiDiscountId = response.combi_id;
+                    this.combiDiscountType = response.discount_type;
+                    this.combiDiscountValue = response.discount_value;
+                    
+                    // Toplamdan indirim miktarını hesapla
+                    let discountAmount = 0;
+                    if (response.discount_type === 'percentage') {
+                        discountAmount = this.total * (parseFloat(response.discount_value) / 100);
+                    } else {
+                        discountAmount = parseFloat(response.discount_value);
+                    }
+                    this.combiDiscountAmount = discountAmount.toFixed(2);
+                    
+                    // İndirim miktarı hesaplandı
+                    
+                    // Combi discount mesajını göster
+                    this.showCombiDiscountMessage(response);
+                } else {
+                    // Combi discount bulunamadı
+                    this.combiDiscountId = null;
+                    this.combiDiscountType = null;
+                    this.combiDiscountValue = null;
+                    this.combiDiscountAmount = null;
+                }
+                this.calculateCartTotal();
+            },
+            error: (xhr, status, error) => {
+                console.error('❌ AJAX hatası:', error);
+                console.error('Status:', status);
+                console.error('Response:', xhr.responseText);
+            }
+        });
+    }
+    
+    showCombiDiscountMessage(response) {
+        // Eski mesajı kaldır
+        const existingMessage = document.getElementById('combi-discount-info');
+        if (existingMessage) {
+            existingMessage.remove();
+        }
+        
+        // Yeni mesaj ekle
+        const typesContainer = document.querySelector('#types').closest('.card-body');
+        if (typesContainer) {
+            let msg = '<div id="combi-discount-info" class="alert alert-success mt-3">';
+            msg += '<strong>Combi-korting toegepast!</strong> ';
+            if (response.discount_type === 'percentage') {
+                msg += 'Er wordt <b>' + response.discount_value + '%</b> korting toegepast op het totaal.';
+            } else {
+                msg += 'Er wordt <b>€' + response.discount_value + '</b> korting toegepast op het totaal.';
+            }
+            msg += '</div>';
+            typesContainer.insertAdjacentHTML('beforeend', msg);
         }
     }
     checkExistCart() {
@@ -290,15 +562,46 @@ class Cart {
         if (this.cart.length > 0) {
             $('.hidden-cart-inputs').remove();
             this.cart.forEach((item, index) => {
+                // Offerte servislerde total 0, normal servislerde mevcut total kullan
+                let itemTotal = item.is_offerte ? 0 : (item.total || (item.quantity * item.price));
+                
+                // itemTotal undefined olabilir, kontrol et
+                if (itemTotal === undefined || itemTotal === null) {
+                    console.warn('⚠️ ItemTotal undefined:', item);
+                    itemTotal = 0;
+                }
+
                 template += `
                         <input class="hidden-cart-inputs" type="hidden" name="items[${index}][type_id]" value="${item.id}" />
                         <input class="hidden-cart-inputs" type="hidden" name="items[${index}][category_id]" value="${item.category_id}" />
                         <input class="hidden-cart-inputs" type="hidden" name="items[${index}][name]" value="${item.name}" />
+                        <input class="hidden-cart-inputs" type="hidden" name="items[${index}][category_name]" value="${item.category_name || ''}" />
                         <input class="hidden-cart-inputs" type="hidden" name="items[${index}][quantity]" value="${item.quantity}" />
                         <input class="hidden-cart-inputs" type="hidden" name="items[${index}][price]" value="${item.price}" />
-                        <input class="hidden-cart-inputs" type="hidden" name="items[${index}][total]" value="${item.quantity * item.price}" />
+                        <input class="hidden-cart-inputs" type="hidden" name="items[${index}][total]" value="${parseFloat(itemTotal).toFixed(2)}" />
+                        <input class="hidden-cart-inputs" type="hidden" name="items[${index}][is_offerte]" value="${item.is_offerte ? '1' : '0'}" />
                     `
             });
+            // Combi discount hidden input'larını ekle
+            console.log('🔍 Combi discount değerleri:', {
+                combiDiscountId: this.combiDiscountId,
+                combiDiscountType: this.combiDiscountType,
+                combiDiscountValue: this.combiDiscountValue,
+                combiDiscountAmount: this.combiDiscountAmount
+            });
+            
+            if (this.combiDiscountId && this.combiDiscountType) {
+                console.log('✅ Combi discount hidden input\'lar ekleniyor...');
+                template += `
+                    <input class="hidden-cart-inputs" type="hidden" name="combi_discount_id" value="${this.combiDiscountId}" />
+                    <input class="hidden-cart-inputs" type="hidden" name="combi_discount_type" value="${this.combiDiscountType}" />
+                    <input class="hidden-cart-inputs" type="hidden" name="combi_discount_value" value="${this.combiDiscountValue || ''}" />
+                    <input class="hidden-cart-inputs" type="hidden" name="combi_discount_amount" value="${this.combiDiscountAmount || ''}" />
+                `;
+            } else {
+                console.log('❌ Combi discount değerleri eksik!');
+            }
+            
             $('#cart-form').append(template);
         }
         // $('#cart-form').submit();
@@ -323,6 +626,37 @@ class Cart {
         return true; // All required inputs are filled
     }
 
+    // Cart değişikliklerinden sonra combi discount kontrolü
+    checkCombiDiscountAfterCartChange() {
+        
+        // checkCombiDiscountAfterCartChange çağrıldı
+        
+        if (this.cart.length >= 2) {
+            // 2+ servis var, combi discount kontrol ediliyor
+            const serviceIds = this.cart.map(item => item.id.toString());
+            // Service IDs alındı
+            
+            // Mevcut combi discount varsa ve edit sayfasındaysak, yeni hesaplama yapma
+            if (this.combiDiscount && this.combiDiscount.has_combi) {
+                // Mevcut combi discount korunuyor
+                // Mevcut combi discount ile toplam hesapla
+                this.calculateCartTotal();
+                return;
+            }
+            
+            // Yeni combi discount kontrolü
+            this.checkCombiDiscount(serviceIds);
+        } else {
+            // 2'den az servis var, combi discount temizleniyor
+            // 2'den az servis varsa combi discount'ı temizle
+            this.combiDiscount = null;
+            this.combiDiscountId = null;
+            this.combiDiscountType = null;
+            this.combiDiscountValue = null;
+            this.combiDiscountAmount = null;
+            this.calculateCartTotal();
+        }
+    }
 }
 
 // Define Cart class
@@ -330,6 +664,18 @@ const cart = new Cart();
 
 // Default
 cart.checkExistCart();
+
+// Combi discount event listener'ını ekle
+document.addEventListener('DOMContentLoaded', function() {
+    const typesSelect = document.querySelector('#types');
+    if (typesSelect) {
+        typesSelect.addEventListener('change', function() {
+            const selected = Array.from(this.selectedOptions).map(option => option.value).filter(id => id !== "0" && id !== "");
+            cart.checkCombiDiscount(selected);
+        });
+    }
+});
+
 // Default end
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -342,14 +688,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // SelectBox
     if (addToCartSelect) {
-        addToCartSelect.onchange = function (element) {
-            console.log(addToCartSelect);
-            const selectedOption = element.target.options[element.target.selectedIndex];
-            let dataProductValue = selectedOption.getAttribute('data-product');
-            dataProductValue = JSON.parse(dataProductValue);
-            cart.add(dataProductValue);
-
-            addToCartSelect.value = 0;
+        addToCartSelect.onchange = function (event) {
+            // Çoklu seçim desteği (select2 veya native multiple)
+            const selectedOptions = Array.from(addToCartSelect.selectedOptions || []);
+            selectedOptions.forEach(option => {
+                // Sadece geçerli (0/boş olmayan ve data-product'ı olan) option'lar işlenir
+                const dataProductValue = option.getAttribute('data-product');
+                if (!dataProductValue) return;
+                let product = null;
+                try {
+                    product = JSON.parse(dataProductValue);
+                } catch (e) {
+                    return;
+                }
+                if (!product || !product.id) return;
+                // Aynı ürün cart'ta zaten varsa tekrar ekleme
+                if (cart.cart.find(item => parseInt(item.id) === parseInt(product.id))) return;
+                cart.add(product);
+            });
+            // Seçimi sıfırlama kaldırıldı, sonsuz döngüye sebep oluyordu
         }
     }
     // SelectBox end
@@ -381,6 +738,13 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll('.cart-counter').forEach(input => {
         input.addEventListener('change', function () {
             changeQuantity(this);
+        });
+        
+        // Input'a minimum değer kontrolü ekle
+        input.addEventListener('input', function() {
+            if (this.value < 1) {
+                this.value = 1;
+            }
         });
     });
 
@@ -449,18 +813,44 @@ function addToCart(element, { id, category_id, title, quantity, price }) {
 // Assuming the changeQuantity function looks like this:
 function changeQuantity(inputElement) {
     const productId = inputElement.closest('td').getAttribute('data-id');
-    const newQuantity = parseInt(inputElement.value, 10);
+    let newQuantity = parseInt(inputElement.value, 10);
+
+    // Minimum değer kontrolü
+    if (newQuantity < 1) {
+        newQuantity = 1;
+        inputElement.value = 1;
+    }
 
     // Find the product in the cart
     const existingProductIndex = cart.cart.findIndex(existingProduct => parseInt(existingProduct.id) === parseInt(productId));
 
+
     if (existingProductIndex !== -1) {
+
+        if ( cart.cart[existingProductIndex].is_offerte ) {
+            inputElement.value = 1;
+            return;
+        }
         // Update the quantity in the cart
         cart.cart[existingProductIndex].quantity = newQuantity;
 
-        // Get the price and calculate new total
-        const price = cart.cart[existingProductIndex].price;
-        const newTotal = price * newQuantity;
+        // Calculate new total with extra price logic
+        const item = cart.cart[existingProductIndex];
+        let newTotal;
+        
+        // item.price undefined olabilir, kontrol et
+        if (item.price === undefined || item.price === null) {
+            console.warn('⚠️ Item price undefined:', item);
+            return;
+        }
+        
+        if ((item.extra == 1 || item.extra === true) && newQuantity > 1 && item.extra_price) {
+            // İlk ürün normal fiyat, sonraki ürünler extra fiyat
+            newTotal = (item.price * 1) + ((newQuantity - 1) * item.extra_price);
+        } else {
+            // Normal fiyat hesaplaması
+            newTotal = newQuantity * item.price;
+        }
 
         // Update the total in the cart
         cart.cart[existingProductIndex].total = newTotal;
@@ -468,7 +858,7 @@ function changeQuantity(inputElement) {
         // Update the corresponding HTML elements
         const totalCell = inputElement.closest('tr').querySelector('.data-total');
         if (totalCell) {
-            totalCell.textContent = '€' + newTotal.toFixed(2);
+            totalCell.textContent = '€' + (newTotal !== undefined && newTotal !== null ? parseFloat(newTotal).toFixed(2) : '0.00');
         }
 
         // Update hidden inputs
@@ -476,6 +866,9 @@ function changeQuantity(inputElement) {
 
         // Update the overall cart total
         cart.calculateCartTotal();
+        
+        // Combi discount kontrolü yap
+        cart.checkCombiDiscountAfterCartChange();
     }
 }
 

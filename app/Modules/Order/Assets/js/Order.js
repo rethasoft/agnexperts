@@ -567,7 +567,6 @@ class OrderHandler {
                             <small class="text-muted">Aantal: ${quantity}</small>
                         </div>
                         <div class="text-end">
-                            <div class="text-muted small">€${price.toFixed(2)} per stuk</div>
                             <strong>€${total.toFixed(2)}</strong>
                         </div>
                     </div>

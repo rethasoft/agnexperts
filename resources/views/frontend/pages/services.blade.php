@@ -2,29 +2,23 @@
 
 @section('title', 'AGN Experts | Professionele Keuringsdiensten in België')
 @section('description', 'Ontdek onze uitgebreide keuringsdiensten: EPC certificaten, asbestcontrole, elektrische keuringen en meer. Professionele expertise voor uw vastgoed in heel België.')
-@section('keywords', 'keuring diensten, EPC certificaat, asbestcontrole, elektrische keuring, vastgoedkeuring, technische controle, energieprestatiecertificaat, woningkeuring België, professionele keuringsdienst, AGN Experts')
+@section('keywords', 'keuring diensten, EPC Attest, asbestcontrole, elektrische keuring, vastgoedkeuring, technische controle, energieprestatiecertificaat, woningkeuring België, professionele keuringsdienst, AGN Experts')
+@section('author', 'AGN Experts')
+@section('canonical', route('services'))
 
 @section('content')
     <main>
-        <div class="it-breadcrumb-area fix p-relative" data-background="assets/img/breadcrumb/breadcrumb-bg.jpg">
-            <div class=it-breadcrumb-shape-1>
-                <img src="assets/img/breadcrumb/breadcrumb-shape.png" alt="">
-            </div>
-            <div class=container>
-                <div class=row>
-                    <div class=col-md-12>
-                        <div class=it-breadcrumb-content>
-                            <div class="it-breadcrumb-title-box mb-25 z-index-3">
-                                <h3 class="it-breadcrumb-title text-white">Diensten</h3>
-                            </div>
-                            <div class=it-breadcrumb-list-wrap>
-                                <div class="it-breadcrumb-list z-index-3">
-                                    <span><a href="/">Home</a></span>
-                                    <span class=dvdr>//</span>
-                                    <span><b>Diensten</b></span>
-                                </div>
-                            </div>
-                        </div>
+        <div class="simple-header-bg py-5 mb-4">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-10 text-center">
+                        <nav aria-label="breadcrumb" class="mb-2">
+                            <ol class="breadcrumb small justify-content-center bg-transparent p-0 mb-1">
+                                <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">Diensten</li>
+                            </ol>
+                        </nav>
+                        <h1 class="simple-header-title mb-0">Diensten</h1>
                     </div>
                 </div>
             </div>
@@ -38,6 +32,18 @@
                             <div class="it-service-item cursor-pointer hover-shadow">
                                 <h3 class=it-section-title-sm>{{ $service->name }}</h3>
                                 <p>{{ $service->short_description }}</p>
+                                
+                                @if($service->regions && count($service->regions) > 0)
+                                    <div class="mt-3 mb-3">
+                                        <small class="text-muted">Beschikbaar in:</small>
+                                        <div class="d-flex flex-wrap gap-1 mt-1">
+                                            @foreach($service->regions as $region)
+                                                <span class="badge bg-primary" style="font-size: 0.7rem;">{{ ucfirst($region) }}</span>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endif
+                                
                                 <div class="it-service-item-thumb mt-25">
                                     <img src="{{ asset($service->image) }}" alt="{{ $service->name }}">
                                 </div>

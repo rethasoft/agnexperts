@@ -11,7 +11,11 @@ class Service extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['name', 'slug', 'image', 'short_description', 'description'];
+    protected $fillable = ['name', 'slug', 'image', 'short_description', 'description', 'regions'];
+
+    protected $casts = [
+        'regions' => 'array',
+    ];
 
     protected static function boot()
     {
@@ -35,5 +39,20 @@ class Service extends Model
     {
         $this->attributes['name'] = $value;
         $this->attributes['slug'] = Str::slug($value);
+    }
+
+    // Helper method to get available regions
+    public static function getAvailableRegions()
+    {
+        return [
+            'brussel' => 'Brussel',
+            'vlaanderen' => 'Vlaanderen'
+        ];
+    }
+
+    // Helper method to check if service is available in a specific region
+    public function isAvailableInRegion($region)
+    {
+        return in_array($region, $this->regions ?? []);
     }
 }

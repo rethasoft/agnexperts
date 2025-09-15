@@ -1,31 +1,25 @@
 @extends('frontend.app')
-@section('title', $blog->title)
+@section('title', $blog->title . ' | AGN Experts')
 @section('description', $blog->short_description)
+@section('keywords', $blog->title . ', blog, AGN Experts, keuring, België')
+@section('author', 'AGN Experts')
+@section('canonical', route('blog.detail', $blog->slug))
 @section('image', asset($blog->image))
 @section('url', route('blog.detail', $blog->slug))
 @section('content')
     <main>
-        <div class="it-breadcrumb-area fix p-relative" data-background="assets/img/breadcrumb/breadcrumb-bg.jpg">
-            <div class=it-breadcrumb-shape-1>
-                <img src="{{ asset('frontend/assets/img/breadcrumb/breadcrumb-shape.png') }}" alt="">
-            </div>
-            <div class=container>
-                <div class=row>
-                    <div class=col-md-12>
-                        <div class=it-breadcrumb-content>
-                            <div class="it-breadcrumb-title-box mb-25 z-index-3">
-                                <h1 class="it-breadcrumb-title text-white">{{ $blog->title }}</h1>
-                            </div>
-                            <div class=it-breadcrumb-list-wrap>
-                                <div class="it-breadcrumb-list z-index-3">
-                                    <span><a href="{{ route('home') }}">Home</a></span>
-                                    <span class=dvdr>//</span>
-                                    <span><a href="{{ route('blog.index') }}">Diensten</a></span>
-                                    <span class=dvdr>//</span>
-                                    <span><b>{{ $blog->title }}</b></span>
-                                </div>
-                            </div>
-                        </div>
+        <div class="simple-header-bg py-5 mb-4">
+            <div class="container">
+                <div class="row justify-content-center">
+                    <div class="col-lg-10 text-center">
+                        <nav aria-label="breadcrumb" class="mb-2">
+                            <ol class="breadcrumb small justify-content-center bg-transparent p-0 mb-1">
+                                <li class="breadcrumb-item"><a href="{{ route('home') }}">Home</a></li>
+                                <li class="breadcrumb-item"><a href="{{ route('blog') }}">Blog</a></li>
+                                <li class="breadcrumb-item active" aria-current="page">{{ $blog->title }}</li>
+                            </ol>
+                        </nav>
+                        <h1 class="simple-header-title mb-0">{{ $blog->title }}</h1>
                     </div>
                 </div>
             </div>

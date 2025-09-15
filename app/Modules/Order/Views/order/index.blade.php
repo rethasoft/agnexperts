@@ -7,7 +7,6 @@
     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="{{ asset('modules/order/js/Order.js') }}" defer></script>
-    <script src="{{ asset('modules/order/js/Coupon.js') }}" defer></script>
 
     <style>
         /* ... existing styles ... */
@@ -177,7 +176,7 @@
                                                             <td colspan="2" class="text-end fw-bold">Totaal:</td>
                                                             <td class="text-end fw-bold">
                                                                 <span id="grandTotal">0.00</span>
-                                                                <span>(Inc. BTW) </span>
+                                                                {{-- <span>(Inc. BTW) </span> --}}
                                                             </td>
                                                             <td></td>
                                                         </tr>
@@ -385,14 +384,14 @@
                         </div>
 
                         <!-- Navigation Buttons -->
-                        <div class="d-flex justify-content-between mt-4">
+                        <div class="d-flex justify-content-between mt-4" id="navigation-buttons">
                             <button type="button" class="btn btn-light btn-prev">
                                 <i class="fas fa-arrow-left me-2"></i>Vorige
                             </button>
-                            <button type="button" class="btn btn-primary btn-next">
+                            <button type="button" class="btn btn-primary btn-next ms-auto">
                                 Volgende<i class="fas fa-arrow-right ms-2"></i>
                             </button>
-                            <button type="submit" class="btn btn-primary btn-submit" style="display: none;">
+                            <button type="submit" class="btn btn-primary btn-submit ms-auto" style="display: none;">
                                 Bestelling Afronden
                             </button>
                         </div>

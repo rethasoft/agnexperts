@@ -33,6 +33,7 @@
                             <tr>
                                 <th width="15%">Naam</th>
                                 <th>Color</th>
+                                <th>Standaard</th>
                                 <th>Datum</th>
                                 <th></th>
                             </tr>
@@ -44,6 +45,13 @@
                                     <td>{{ $item->name }}</td>
                                     <td>
                                         <span class="px-4 py-1 rounded" style="background:{{ $item->color }}"></span></td>
+                                    <td>
+                                        @if(!empty($item->is_default) && $item->is_default)
+                                            <span class="badge bg-success"><i class="ri-star-fill"></i> Standaard</span>
+                                        @else
+                                            <span class="badge bg-secondary">-</span>
+                                        @endif
+                                    </td>
                                     <td>{{ date('Y-m-d', strtotime($item->created_at)) }}</td>
                                     <td class="text-end">
                                         <form action="{{ route('status.edit', ['status' => $item->id]) }}" class="d-inline-block" method="GET">

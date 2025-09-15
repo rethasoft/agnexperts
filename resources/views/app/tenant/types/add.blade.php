@@ -33,6 +33,29 @@
                     <div class="card-body">
                         <div class="row mb-3">
                             <div class="col-lg-12">
+                                <label class="form-label">Regio's</label>
+                                <div class="row">
+                                    <div class="col-lg-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="regions[]" value="brussel" id="region_brussel">
+                                            <label class="form-check-label" for="region_brussel">
+                                                Brussel
+                                            </label>
+                                        </div>
+                                    </div>
+                                    <div class="col-lg-6">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="regions[]" value="vlaanderen" id="region_vlaanderen">
+                                            <label class="form-check-label" for="region_vlaanderen">
+                                                Vlaanderen
+                                            </label>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-3">
+                            <div class="col-lg-12">
                                 <label for="name" class="form-label">Categorie</label>
                                 <select name="data[category_id]" id="" class="form-control">
                                     <option value="0"> Selecteren </option>
@@ -63,6 +86,16 @@
                                 <label for="price" class="form-label">Prijs</label>
                                 <input type="text" id="price" name="data[price]" class="form-control"
                                     autocomplete="off" required>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-lg-12">
+                                <div class="form-check form-check-inline">
+                                    <input type="hidden" name="data[is_offerte]" id="" value="0" />
+                                    <input class="form-check-input" type="checkbox" name="data[is_offerte]" id="is_offerte" value="1">
+                                    <label class="form-check-label" for="is_offerte">Offerte</label>
+                                </div>
                             </div>
                         </div>
 
