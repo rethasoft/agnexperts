@@ -143,9 +143,9 @@
                             <div class="rounded-circle bg-opacity-10 me-3">
                                 <i class="ri-time-line fs-4 text-warning"></i>
                             </div>
-                            <h4 class="card-title h5 mb-0">Recente Keuringen</h4>
+                            <h4 class="card-title h5 mb-0">Recente Inspecties</h4>
                         </div>
-                        <a href="{{ route($guard . '.keuringen.create') }}" class="btn btn-primary btn-sm">
+                        <a href="{{ route('client.inspections.create') }}" class="btn btn-primary btn-sm">
                             <i class="ri-add-line me-1"></i>
                             Nieuwe Keuring
                         </a>
@@ -167,19 +167,19 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach ($statistics['recent_keuringen'] as $keuring)
+                                @foreach ($statistics['recent_keuringen'] as $inspection)
                                     <tr>
-                                        <td>{{ $keuring->file_id ?? '-' }}</td>
-                                        <td>{{ $keuring->name ?? '-' }}</td>
-                                        <td>{{ $keuring->email ?? '-' }}</td>
-                                        <td>{{ $keuring->phone ?? '-' }}</td>
-                                        <td>{{ $keuring->street ?? '-' }}</td>
+                                        <td>{{ $inspection->file_id ?? '-' }}</td>
+                                        <td>{{ $inspection->name ?? '-' }}</td>
+                                        <td>{{ $inspection->email ?? '-' }}</td>
+                                        <td>{{ $inspection->phone ?? '-' }}</td>
+                                        <td>{{ $inspection->street ?? '-' }}</td>
                                         <td>
-                                            @if ($keuring->getStatus)
+                                            @if ($inspection->status)
                                                 <span class="badge fw-normal"
-                                                    style="background: {{ $keuring->getStatus->color }}">
+                                                    style="background: {{ $inspection->status->color }}">
                                                     <i class="ri-checkbox-circle-line me-1"></i>
-                                                    {{ $keuring->getStatus->name }}
+                                                    {{ $inspection->status->name }}
                                                 </span>
                                             @else
                                                 <span class="badge bg-secondary fw-normal">
@@ -188,19 +188,17 @@
                                                 </span>
                                             @endif
                                         </td>
-                                        <td>{{ $keuring->created_at->format('d/m/Y H:i') }}</td>
+                                        <td>{{ $inspection->created_at->format('d/m/Y H:i') }}</td>
                                         <td>
                                             <div class="btn-group btn-group-sm">
-                                                <a href="{{ route($guard . '.keuringen.show', $keuring->id) }}"
+                                                <a href="{{ route('client.inspections.show', $inspection->id) }}"
                                                     class="btn btn-outline-primary" title="Details bekijken">
                                                     <i class="ri-eye-line"></i>
                                                 </a>
-                                                @if ($keuring->document_path)
-                                                    <a href="{{ route($guard . '.keuringen.download', $keuring->id) }}"
-                                                        class="btn btn-outline-success" title="Document downloaden">
-                                                        <i class="ri-download-line"></i>
-                                                    </a>
-                                                @endif
+                                                <a href="{{ route('client.inspections.edit', $inspection->id) }}"
+                                                    class="btn btn-outline-info" title="Bewerken">
+                                                    <i class="ri-pencil-line"></i>
+                                                </a>
                                             </div>
                                         </td>
                                     </tr>

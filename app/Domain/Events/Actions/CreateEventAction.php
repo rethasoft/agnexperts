@@ -15,10 +15,10 @@ class CreateEventAction
 
     public function execute(EventData $data): Event
     {
-        // İş çakışması kontrolü
-        if ($this->repository->hasConflict($data->employee_id, $data->start_date, $data->end_date)) {
-            throw new ConflictingEventException();
-        }
+        // İş çakışması kontrolü (GEÇİCİ OLARAK DEVRE DIŞI)
+        // if ($this->repository->hasConflict($data->employee_id, $data->start_date, $data->end_date)) {
+        //     throw new ConflictingEventException();
+        // }
 
         return $this->repository->create($data->toArray());
     }

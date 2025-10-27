@@ -9,16 +9,22 @@
 
         <div class="card-body">
             <div class="row g-3">
-                @if ($isEdit && $keuringen)
+                @if ($isEdit && $inspection)
                     <div class="col-12">
                         <label class="form-label">Dossiernummer</label>
-                        <input type="text" name="data[file_id]" class="form-control" readonly
-                            value="{{ $keuringen->file_id }}">
+                        <input type="text" name="file_id" class="form-control" readonly
+                            value="{{ $inspection->file_id }}">
                     </div>
                 @endif
+                {{-- <div class="col-12">
+                    <label class="form-label">Datum plaatsbezoek</label>
+                    <input type="date" name="inspection_date" class="form-control" required
+                        min="{{ now()->toDateString() }}"
+                        value="{{ $isEdit && $inspection && $inspection->inspection_date ? \Carbon\Carbon::parse($inspection->inspection_date)->format('Y-m-d') : '' }}">
+                </div> --}}
                 <div class="col-12">
                     <label class="form-label">Files</label>
-                    <input type="file" name="docs[]" class="form-control" multiple>
+                    <input type="file" name="customer_files[]" class="form-control" multiple>
                 </div>
                 
             </div>

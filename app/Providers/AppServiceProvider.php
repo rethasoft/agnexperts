@@ -16,6 +16,8 @@ use App\Domain\Status\Repositories\StatusRepositoryInterface;
 use App\Domain\Status\Repositories\StatusRepository;
 use App\Domain\DocumentManagement\Repositories\DocumentRepository;
 use App\Domain\DocumentManagement\Repositories\Interfaces\DocumentRepositoryInterface;
+use App\Services\GuardResolver;
+use App\Services\GuardResolverImpl;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -24,6 +26,15 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(EventRepositoryInterface::class, EventRepository::class);
         $this->app->bind(StatusRepositoryInterface::class, StatusRepository::class);
         $this->app->bind(DocumentRepositoryInterface::class, DocumentRepository::class);
+        if (method_exists($this->app, 'scoped')) {
+            $this->app->scoped(GuardResolver::class, function ($app) {
+                return new GuardResolverImpl();
+            });
+        } else {
+            $this->app->singleton(GuardResolver::class, function ($app) {
+                return new GuardResolverImpl();
+            });
+        }
     }
 
     /**

@@ -25,9 +25,15 @@ class Cart {
                 row.classList.add('service-row');
                 row.dataset.id = detail.type_id;
 
+                // Check if we're on edit page for database items
+                const isEditPage = window.location.pathname.includes('/edit');
+                // Use InspectionItem ID for edit page, type_id for create page
+                const itemId = isEditPage ? detail.id : detail.type_id;
+                const deleteFunction = isEditPage ? `deleteCartProduct(${detail.id}, false)` : `deleteCartProduct(${detail.type_id})`;
+                
                 row.innerHTML = `
-                    <td><button type="button" class="btn btn-sm btn-danger" onclick="deleteCartProduct(${detail.type_id}, true)">X</button></td>
-                    <td>${detail.type_id}</td>
+                    <td><button type="button" class="btn btn-sm btn-danger" onclick="${deleteFunction}">X</button></td>
+                    <td>${itemId}</td>
                     <td>${detail.category ? detail.category.name + ' > ' + detail.name : detail.name}${detail.is_offerte ? '<br><small class="text-info">Offerte - Prijs wordt opgegeven</small>' : ''}</td>
                     <td data-id="${detail.type_id}" class="data-quantity">
                         <input type="number" class="cart-counter" value="${detail.quantity}" min="1"
@@ -58,14 +64,14 @@ class Cart {
         this.combiDiscountType = null;
         this.combiDiscountValue = null;
         this.combiDiscountAmount = null;
-        
-        // Edit sayfasında mevcut combi discount verilerini yükle
-        if (typeof existingCombiDiscount !== 'undefined') {
+        const cartTotalElement = document.getElementById('cart-total');
+        // Edit sayfasında mevcut combi discount verilerini yükle (null/undefined guard)
+        if (typeof existingCombiDiscount !== 'undefined' && existingCombiDiscount) {
             this.combiDiscount = existingCombiDiscount;
-            this.combiDiscountId = existingCombiDiscount.combi_discount_id;
-            this.combiDiscountType = existingCombiDiscount.combi_discount_type;
-            this.combiDiscountValue = existingCombiDiscount.combi_discount_value;
-            this.combiDiscountAmount = existingCombiDiscount.combi_discount_amount;
+            this.combiDiscountId = existingCombiDiscount.combi_discount_id || null;
+            this.combiDiscountType = existingCombiDiscount.combi_discount_type || null;
+            this.combiDiscountValue = existingCombiDiscount.combi_discount_value || null;
+            this.combiDiscountAmount = existingCombiDiscount.combi_discount_amount || null;
         }
 
         // buttons
@@ -73,7 +79,7 @@ class Cart {
         this.next = document.getElementById('next-button');
 
         // Request path
-        this.requestPath = '/tenant/keuringen-detail/';
+        this.requestPath = '/app/tenant/keuringen-detail/';
     }
 
     initializeFromExistingData(existingData) {
@@ -94,15 +100,19 @@ class Cart {
             this.combiDiscountValue = existingCombiDiscount.combi_discount_value;
             this.combiDiscountAmount = existingCombiDiscount.combi_discount_amount;
             
-            console.log('🎉 Combi discount yüklendi:', this.combiDiscount);
-        } else {
-            // existingCombiDiscount tanımlı değil
-            console.log('❌ existingCombiDiscount bulunamadı');
         }
         
         existingData.forEach(item => {
             // Cart'a ekle
             this.cart.push(item);
+
+            // Seçili servisi selectbox'ta devre dışı bırak
+            const selectOption = document.querySelector(`#types option[value="${item.type_id}"]`);
+            if (selectOption) {
+                selectOption.disabled = true;
+                selectOption.style.opacity = '0.5';
+                selectOption.style.fontStyle = 'italic';
+            }
 
             // Tabloyu güncelle
             const row = document.createElement('tr');
@@ -127,7 +137,7 @@ class Cart {
             }
 
             row.innerHTML = `
-                <td><button type="button" class="btn btn-sm btn-danger" onclick="deleteCartProduct(${item.id}, true)">X</button></td>
+                <td><button type="button" class="btn btn-sm btn-danger" onclick="deleteCartProduct(${item.id}, false)">X</button></td>
                 <td>${item.id}</td>
                 <td>${item.name}${item.is_offerte ? '<br><small class="text-info">Offerte - Prijs wordt opgegeven</small>' : ''}</td>
                 <td data-id="${item.id}" class="data-quantity">
@@ -154,6 +164,7 @@ class Cart {
 
     add(product) {
         const row = document.createElement('tr');
+        
         // Check if an item with the same id already exists in the cart
         const existingProductIndex = this.cart.findIndex(existingProduct => parseInt(existingProduct.id) === parseInt(product.id));
 
@@ -192,7 +203,7 @@ class Cart {
 
 
             row.innerHTML = `
-            <td><button type="button" class="btn btn-sm btn-danger" onclick="deleteCartProduct(${product.id}, true)">X</button></td>
+            <td><button type="button" class="btn btn-sm btn-danger" onclick="deleteCartProduct(${product.id})">X</button></td>
             <td>${product.id}</td>
             <td>${product.category_name && product.category_name != '' ? product.category_name + ' > ' : ''} ${product.name}${product.is_offerte ? '<br><small class="text-info">Offerte - Prijs wordt opgegeven</small>' : ''}</td>
             <td data-id="${product.id}" class="data-quantity"><input type="number" class="cart-counter" value="${product.quantity}" min="1" onchange="changeQuantity(this)" style="width:60px;text-align-center;"/></td>
@@ -254,11 +265,24 @@ class Cart {
         const indexToDelete = this.cart.findIndex(product => parseInt(product.id) === parseInt(id));
 
         if (preview == false) {
-            let response = await fetch(this.requestPath + id, {
+            // Check if we're on edit page (inspection ID in URL)
+            const currentPath = window.location.pathname;
+            const editMatch = currentPath.match(/\/inspections\/(\d+)\/edit/);
+            
+            let deleteUrl;
+            if (editMatch) {
+                // Edit page - use remove-service endpoint with InspectionItem ID
+                deleteUrl = `/app/tenant/inspections/remove-service/${id}`;
+            } else {
+                // Create page - use general delete endpoint
+                deleteUrl = this.requestPath + id;
+            }
+            
+            let response = await fetch(deleteUrl, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF_TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 }
             });
 
@@ -271,18 +295,33 @@ class Cart {
         }
 
         if (indexToDelete !== -1) {
+            // Store the product data before removing for re-enabling select option
+            const removedProduct = this.cart[indexToDelete];
+            
             this.cart.splice(indexToDelete, 1);
 
             let getItem = document.getElementById(`item-${id}`);
-            getItem.parentNode.removeChild(getItem);
+            if (getItem && getItem.parentNode) {
+                getItem.parentNode.removeChild(getItem);
+            }
 
             let cartInputs = document.querySelectorAll(`[name*="cart[${indexToDelete}]"`);
 
             cartInputs.forEach(cartInput => {
-                cartInput.parentNode.removeChild(cartInput);
+                if (cartInput && cartInput.parentNode) {
+                    cartInput.parentNode.removeChild(cartInput);
+                }
             });
 
+            // Re-enable the corresponding select option
+            this.reEnableSelectOption(removedProduct);
+
             this.calculateCartTotal();
+            
+            // Hide cart if empty
+            if (this.cart.length === 0) {
+                this.cartDiv.classList.add('d-none');
+            }
             
             // Combi discount kontrolü yap
             this.checkCombiDiscountAfterCartChange();
@@ -290,6 +329,20 @@ class Cart {
             return true;
         } else {
             return false;
+        }
+    }
+
+    reEnableSelectOption(removedProduct) {
+        // Re-enable the corresponding select option when a service is removed
+        const selectElement = document.getElementById('types');
+        if (selectElement && removedProduct) {
+            const selectOption = selectElement.querySelector(`option[value="${removedProduct.id}"]`);
+            if (selectOption) {
+                selectOption.disabled = false;
+                selectOption.style.opacity = '1';
+                selectOption.style.fontStyle = 'normal';
+                selectOption.selected = false;
+            }
         }
     }
 
@@ -317,7 +370,7 @@ class Cart {
     }
 
     calculateCartTotal() {
-        console.log(this.cart);
+        // console.log(this.cart);
         if (this.cart.length > 0) {
             let total = 0;
             this.cart.forEach((item) => {
@@ -353,9 +406,9 @@ class Cart {
                 if (discountedTotal < 0) discountedTotal = 0;
                 
                 // Combi discount değerlerini kaydet!
-                this.combiDiscountId = this.combiDiscount.combi_id;
-                this.combiDiscountType = this.combiDiscount.discount_type;
-                this.combiDiscountValue = this.combiDiscount.discount_value;
+                this.combiDiscountId = (this.combiDiscount && this.combiDiscount.combi_id) ? this.combiDiscount.combi_id : this.combiDiscountId;
+                this.combiDiscountType = (this.combiDiscount && this.combiDiscount.discount_type) ? this.combiDiscount.discount_type : this.combiDiscountType;
+                this.combiDiscountValue = (this.combiDiscount && this.combiDiscount.discount_value) ? this.combiDiscount.discount_value : this.combiDiscountValue;
                 this.combiDiscountAmount = (this.total - discountedTotal).toFixed(2);
                 
                 // Ana toplam gösterimini güncelle (combi discount ile)
@@ -391,8 +444,7 @@ class Cart {
     
     checkCombiDiscount(selectedServiceIds) {
         
-        console.log('🔍 checkCombiDiscount çağrıldı, selectedServiceIds:', selectedServiceIds);
-        
+                
         if (selectedServiceIds.length < 2) {
             // Eğer mevcut combi discount varsa ve edit sayfasındaysak, silme
             if (this.combiDiscount && this.combiDiscount.has_combi && typeof existingCombiDiscount !== 'undefined') {
@@ -400,7 +452,7 @@ class Cart {
                 return;
             }
             
-            console.log('🗑️ Combi discount temizleniyor');
+
             this.combiDiscount = null;
             this.combiDiscountId = null;
             this.combiDiscountType = null;
@@ -419,7 +471,6 @@ class Cart {
         }
         
         // AJAX ile combi discount kontrol ediliyor
-        console.log('📡 AJAX ile combi discount kontrol ediliyor...');
         $.ajax({
             url: '/app/tenant/ajax/check-combi-discount',
             type: 'POST',
@@ -429,7 +480,7 @@ class Cart {
             },
             success: (response) => {
                 // AJAX yanıtı alındı
-                this.combiDiscount = response;
+                this.combiDiscount = response || null;
                 if (response.has_combi) {
                     // Combi discount bulundu
                     this.combiDiscountId = response.combi_id;
@@ -459,9 +510,7 @@ class Cart {
                 this.calculateCartTotal();
             },
             error: (xhr, status, error) => {
-                console.error('❌ AJAX hatası:', error);
-                console.error('Status:', status);
-                console.error('Response:', xhr.responseText);
+                // Sessiz hata; konsol kirletmeyelim
             }
         });
     }
@@ -571,8 +620,11 @@ class Cart {
                     itemTotal = 0;
                 }
 
+                // Determine the correct type_id based on whether this is an existing item or new item
+                const typeId = item.type_id || item.id; // Use type_id if available, otherwise use id
+                
                 template += `
-                        <input class="hidden-cart-inputs" type="hidden" name="items[${index}][type_id]" value="${item.id}" />
+                        <input class="hidden-cart-inputs" type="hidden" name="items[${index}][type_id]" value="${typeId}" />
                         <input class="hidden-cart-inputs" type="hidden" name="items[${index}][category_id]" value="${item.category_id}" />
                         <input class="hidden-cart-inputs" type="hidden" name="items[${index}][name]" value="${item.name}" />
                         <input class="hidden-cart-inputs" type="hidden" name="items[${index}][category_name]" value="${item.category_name || ''}" />
@@ -581,14 +633,7 @@ class Cart {
                         <input class="hidden-cart-inputs" type="hidden" name="items[${index}][total]" value="${parseFloat(itemTotal).toFixed(2)}" />
                         <input class="hidden-cart-inputs" type="hidden" name="items[${index}][is_offerte]" value="${item.is_offerte ? '1' : '0'}" />
                     `
-            });
-            // Combi discount hidden input'larını ekle
-            console.log('🔍 Combi discount değerleri:', {
-                combiDiscountId: this.combiDiscountId,
-                combiDiscountType: this.combiDiscountType,
-                combiDiscountValue: this.combiDiscountValue,
-                combiDiscountAmount: this.combiDiscountAmount
-            });
+            });            
             
             if (this.combiDiscountId && this.combiDiscountType) {
                 console.log('✅ Combi discount hidden input\'lar ekleniyor...');
@@ -599,7 +644,7 @@ class Cart {
                     <input class="hidden-cart-inputs" type="hidden" name="combi_discount_amount" value="${this.combiDiscountAmount || ''}" />
                 `;
             } else {
-                console.log('❌ Combi discount değerleri eksik!');
+                // console.log('❌ Combi discount değerleri eksik!');
             }
             
             $('#cart-form').append(template);
@@ -656,6 +701,20 @@ class Cart {
             this.combiDiscountAmount = null;
             this.calculateCartTotal();
         }
+    }
+
+    reset(){
+        this.cart = [];
+        this.combiDiscount = null;
+        this.combiDiscountId = null;
+        this.combiDiscountType = null;
+        this.combiDiscountValue = null;
+        this.combiDiscountAmount = null;
+        this.calculateCartTotal();
+        if ( this.cartTableBody ){
+            this.cartTableBody.innerHTML = '';
+        }
+        this.updateCartTotalDisplay(0, false);
     }
 }
 
@@ -726,9 +785,9 @@ document.addEventListener('DOMContentLoaded', function () {
     if (deleteCartButton) {
         deleteCartButton.forEach((button) => {
             const id = button.getAttribute('data-id');
-            button.addEventListener('click', function () {
+            button.addEventListener('click', async function () {
                 if (confirm('Wilt u deze dienst verwijderen?')) {
-                    cart.delete(id);
+                    await cart.delete(id);
                 }
             });
         })
@@ -752,15 +811,28 @@ document.addEventListener('DOMContentLoaded', function () {
 
 
 // functions
-function deleteCartProduct(id, preview) {
-    const response = cart.delete(id, preview);
-
-    if (response) {
-        const row = cart.cartTableBody.querySelector('#item-' + id);
-        if (row) {
-            row.remove();
+async function deleteCartProduct(id, preview = true) {
+    try{
+        // Show confirmation dialog for security
+        const confirmMessage = preview 
+            ? 'Weet je zeker dat je dit item wilt verwijderen?' 
+            : 'Weet je zeker dat je deze service wilt verwijderen? Dit kan niet ongedaan worden gemaakt.';
+        
+        if (!confirm(confirmMessage)) {
+            return; // User cancelled
         }
-
+        
+        // For inspections create page, always use preview=true to avoid server requests
+        // Just remove from cart - the cart.delete method handles everything including re-enabling select options
+        const success = await cart.delete(id, preview);
+        if (success) {
+            const row = cart.cartTableBody ? cart.cartTableBody.querySelector('#item-' + id) : null;
+            if (row && row.parentNode) {
+                row.parentNode.removeChild(row);
+            }
+        }
+    }catch(e){
+        console.error('Delete error', e);
     }
 }
 function toNextStep() {

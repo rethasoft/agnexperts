@@ -3,11 +3,12 @@
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
-use Illuminate\Mail\Mailable;
+use App\Mail\BaseMail;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Contracts\Queue\ShouldQueue;
+use Illuminate\Support\Facades\Log;
+// use Illuminate\Contracts\Queue\ShouldQueue;
 
-class OrderConfirmationMail extends Mailable implements ShouldQueue
+class OrderConfirmationMail extends BaseMail // implements ShouldQueue
 {
     use Queueable, SerializesModels;
     
@@ -21,6 +22,7 @@ class OrderConfirmationMail extends Mailable implements ShouldQueue
      */
     public function __construct($mailData)
     {
+        parent::__construct();
         $this->orderDetails = $mailData;
         $this->selectedServicesValidation = $mailData['selectedServicesValidation'];
     }
@@ -32,12 +34,21 @@ class OrderConfirmationMail extends Mailable implements ShouldQueue
      */
     public function build()
     {
-        return $this->from('info@agnexperts.be', 'AGN Experts')
-                    ->subject('Bestelbevestiging - Uw bestelling is ontvangen')
-                    ->view('order::emails.order_confirmation')
-                    ->with([
-                        'orderDetails' => $this->orderDetails,
-                        'selectedServicesValidation' => $this->selectedServicesValidation
-                    ]);
+        try {
+            $mail = $this->subject('Bestelbevestiging - Uw bestelling is ontvangen')
+                        ->view('emails.order_confirmation')
+                        ->with([
+                            'orderDetails' => $this->orderDetails,
+                            'selectedServicesValidation' => $this->selectedServicesValidation
+                        ]);
+
+            return $mail;
+        } catch (\Exception $e) {
+            Log::error('OrderConfirmationMail build failed', [
+                'error' => $e->getMessage(),
+                'email' => $this->orderDetails['email'] ?? 'unknown'
+            ]);
+            throw $e;
+        }
     }
 }

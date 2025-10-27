@@ -134,6 +134,7 @@
                                                         <i class="ri-eye-line"></i>
                                                     </a>
                                                 @endauth
+                                                @auth('tenant')
                                                 <a href="{{ route($guard . '.inspections.edit', $item->id) }}"
                                                     class="btn btn-sm btn-info"
                                                     style="border-radius: 0; transition: all 0.2s ease;">
@@ -149,6 +150,7 @@
                                                         <i class="ri-delete-bin-line"></i>
                                                     </button>
                                                 </form>
+                                                @endauth
                                             </div>
                                         </td>
                                     </tr>

@@ -21,10 +21,22 @@ class Client extends Authenticatable
         'user_id',
         'name',
         'surname',
+        'company_name',
+        'btw_number',
         'email',
         'password',
         'phone',
-        'address'
+        'street',
+        'house_number',
+        'house_number_addition',
+        'postal_code',
+        'city',
+        'contact_person',
+        'industry',
+        'address',
+        'internal_notes',
+        'client_notes',
+        'billing_address'
     ];
 
     /**
@@ -42,12 +54,13 @@ class Client extends Authenticatable
      * @var array<string, string>
      */
     protected $casts = [
-        'password' => "hashed"
+        'password' => "hashed",
+        'billing_address' => 'array'
     ];
 
-    public function keuringens()
+    public function inspections()
     {
-        return $this->hasMany(Keuringen::class);
+        return $this->hasMany(\App\Domain\Inspections\Models\Inspection::class);
     }
 
     public function user()

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Http\RedirectResponse;
 
 class AppController extends Controller
@@ -39,8 +40,8 @@ class AppController extends Controller
             ]);
 
             $user = Auth::getProvider()->retrieveByCredentials($credentials);
- 
-            if (!$user) {
+
+            if (!$user || !Hash::check($credentials['password'], $user->password)) {
                 return back()->withErrors([
                     'email' => __('validation.custom.auth_credential_error'),
                 ]);

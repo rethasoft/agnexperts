@@ -30,15 +30,15 @@ class UpdateInspectionRequest extends FormRequest
             'postal_code' => ['required', 'string'],
             'city' => ['required', 'string'],
             'province' => ['nullable', 'string'],
-            'province_id' => ['nullable', 'exists:provinces,id'],
+            'province_id' => ['required', 'integer', 'min:1', 'exists:provinces,id'],
 
             // Billing Address
-            'has_billing_address' => ['boolean'],
-            'billing_street' => ['required_if:has_billing_address,true'],
-            'billing_number' => ['required_if:has_billing_address,true'],
+            'has_billing_address' => ['nullable'],
+            'billing_street' => ['required_with:billing_number,billing_postal_code,billing_city'],
+            'billing_number' => ['required_with:billing_street,billing_postal_code,billing_city'],
             'billing_box' => ['nullable', 'string'],
-            'billing_postal_code' => ['required_if:has_billing_address,true'],
-            'billing_city' => ['required_if:has_billing_address,true'],
+            'billing_postal_code' => ['required_with:billing_street,billing_number,billing_city'],
+            'billing_city' => ['required_with:billing_street,billing_number,billing_postal_code'],
 
             // Financial
             'total' => ['nullable', 'numeric', 'min:0'],
@@ -51,8 +51,8 @@ class UpdateInspectionRequest extends FormRequest
             'inspection_date' => ['nullable', 'date'],
             'text' => ['nullable', 'string'],
             'items' => ['nullable', 'array'],
-            'items.*.category_id' => ['required', 'exists:types,category_id'],
-            'items.*.type_id' => ['required', 'exists:types,id'],
+            'items.*.category_id' => ['nullable', 'integer', 'min:0'],
+            'items.*.type_id' => ['nullable', 'integer', 'exists:types,id'],
             'items.*.name' => ['required', 'string', 'max:255'],
             'items.*.quantity' => ['required', 'numeric', 'min:1'],
             'items.*.price' => ['required', 'numeric', 'min:0'],

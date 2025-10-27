@@ -79,7 +79,7 @@ class Inspection extends Model
     ];
 
     protected $casts = [
-        'has_billing_address' => 'boolean',
+        // 'has_billing_address' => 'boolean',
         'paid' => 'boolean',
         'total' => 'float',
         'tax' => 'float',

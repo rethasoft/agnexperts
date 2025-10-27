@@ -20,7 +20,8 @@ use App\Http\Controllers\{
     InvoiceController,
     FileController,
     DocumentController,
-    CombiDiscountController
+    CombiDiscountController,
+    KeuringenDetailController
 };
 
 
@@ -39,9 +40,11 @@ Route::middleware('auth')->group(function () {
             'destroy' => 'tenant.inspections.destroy'
         ]);
     Route::get('inspections/send-invoice/{id}', [InspectionController::class, 'sendInvoice'])->name('inspections.send-invoice');
+    Route::delete('inspections/remove-service/{id}', [InspectionController::class, 'removeService'])->name('inspections.remove-service');
 
 
     Route::resource('client', ClientController::class)->names('client');
+    Route::post('client/{client}/pricelist', [ClientController::class, 'updatePriceList'])->name('client.pricelist.update');
     Route::resource('status', StatusController::class)->names('status');
     Route::resource('dienst', TypeController::class)->names('dienst');
     Route::post('dienst/sort', [TypeController::class, 'sort'])->name('dienst.sort');
@@ -70,7 +73,7 @@ Route::middleware('auth')->group(function () {
 
     // Additional routes
     Route::get('setting/delete-logo/{id}', [SettingController::class, 'destroyLogo'])->name('setting.deleteLogo');
-    // Route::resource('keuringen-detail', KeuringenDetailController::class);
+    Route::resource('keuringen-detail', KeuringenDetailController::class)->names('tenant.keuringen-detail');
     Route::resource('employe-event', EmployeEventController::class)->names([
         'store' => 'tenant.employe-event.store',
         'update' => 'tenant.employe-event.update',

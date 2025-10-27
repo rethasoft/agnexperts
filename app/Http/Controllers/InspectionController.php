@@ -7,7 +7,6 @@ use App\Domain\Inspections\Actions\CreateInspectionAction;
 use App\Domain\Inspections\Actions\UpdateInspectionAction;
 use App\Domain\Inspections\DTOs\InspectionData;
 use App\Domain\Inspections\Models\Inspection;
-
 use App\Models\Client;
 use App\Models\Employee;
 use App\Models\Type;
@@ -19,13 +18,18 @@ use App\Domain\Invoices\Services\InvoiceService;
 use App\Http\Requests\CreateInspectionRequest;
 use App\Http\Requests\UpdateInspectionRequest;
 use App\Http\Resources\InspectionResource;
+use App\Domain\Inspections\Services\InspectionService;
 use App\Domain\Invoices\Models\Invoice;
 use App\Domain\Events\Actions\CreateEventAction;
 use App\Domain\Events\DTOs\EventData;
 use App\Domain\Events\Models\Event;
 use App\Domain\Events\Actions\UpdateEventAction;
 use App\Domain\Status\Services\StatusService;
+use App\Services\TransactionService;
+use App\Services\GuardResolver;
+use App\Exceptions\InspectionException as CustomInspectionException;
 use Illuminate\Support\Facades\Log;
+
 
 class InspectionController extends Controller
 {
@@ -37,7 +41,9 @@ class InspectionController extends Controller
         private readonly InvoiceService $invoiceService,
         private readonly CreateEventAction $createEventAction,
         private readonly UpdateEventAction $updateEventAction,
-        private readonly StatusService $statusService
+        private readonly StatusService $statusService,
+        private readonly InspectionService $inspectionService,
+        private readonly GuardResolver $ctx
     ) {}
 
     public function index()
@@ -51,18 +57,32 @@ class InspectionController extends Controller
         $inspections = InspectionResource::collection($inspections);
         $statuses = $this->statusService->getAllStatuses();
 
-        
-        return view('app.tenant.inspections.index', compact('inspections', 'statuses'));
+        $guard = $this->ctx->guard();
+        return view('app.tenant.inspections.index', compact('inspections', 'statuses', 'guard'));
     }
 
     public function create()
     {
+
+        $guard = $this->ctx->guard();
+        
+        $types = collect();
         $clients = Client::all();
         $employees = Employee::all();
-        $types = Type::all();
-        $provinces = Province::all();
 
-        return view('app.tenant.inspections.create', compact('clients', 'employees', 'types', 'provinces'));
+        if (auth()->guard('client')->check()) {
+            $types = $this->inspectionService->getTypesForClient(auth()->guard('client')->user()->client->id);
+        } else {
+            $types = Type::where('category_id', 0)
+                ->with(['subTypes' => function ($q) {
+                    $q->orderBy('sort_order');
+                }])
+                ->orderBy('sort_order')
+                ->get();
+        }
+
+        $provinces = Province::all();
+        return view('app.tenant.inspections.create', compact('clients', 'employees', 'types', 'provinces', 'guard'));
     }
 
     private function createInspectionEvent(Inspection $inspection): void
@@ -100,55 +120,121 @@ class InspectionController extends Controller
 
     public function store(CreateInspectionRequest $request)
     {
+        $requestId = uniqid('inspection_create_');
+
         try {
-            $inspection = $this->createInspectionAction->execute(
-                InspectionData::fromRequest($request)
-            );
+            $inspection = TransactionService::execute(function () use ($request, $requestId) {
+                // Create inspection
+                $inspection = $this->createInspectionAction->execute(
+                    InspectionData::fromRequest($request)
+                );
 
-            $this->createInspectionEvent($inspection);
+                // Create event
+                $this->createInspectionEvent($inspection);
 
+                // Handle file uploads
+                $this->handleFileUploads($request, $inspection, $requestId);
+
+                return $inspection;
+            }, 'inspection_creation');
+
+            // Check which button was clicked
+            $guard = $this->ctx->guard();
+            
+            if ($request->has('to-detail')) {
+                // "Opslaan & Details" button - redirect to edit page
+                return redirect()
+                    ->route($guard . '.inspections.edit', $inspection)
+                    ->with('msg', 'Inspectie succesvol aangemaakt');
+            } else {
+                // "Opslaan" button - redirect back to create page
+                return redirect()
+                    ->route($guard . '.inspections.create')
+                    ->with('msg', 'Inspectie succesvol aangemaakt');
+            }
+        } catch (InspectionValidationException $e) {
+            return back()->withErrors($e->getErrors());
+        } catch (InspectionException $e) {
+            return back()->withErrors($e->getMessage());
+        } catch (\Exception $e) {
+            Log::error('InspectionController@store: ' . $e->getMessage());
+            return redirect()
+                ->route($this->ctx->guard() . '.inspections.create')
+                ->withInput($request->all())
+                ->withErrors('Hata: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Handle file uploads for inspection
+     */
+    private function handleFileUploads($request, Inspection $inspection, string $requestId): void
+    {
+        try {
             if ($request->hasFile('invoice')) {
-                // Önce invoice service ile invoice kaydı oluştur
-                $invoice = $this->invoiceService->createFromInspection($inspection);
+                Log::info('Processing invoice file upload', [
+                    'request_id' => $requestId,
+                    'inspection_id' => $inspection->id,
+                ]);
 
-                // Sonra dosyayı yükle ve invoice ile ilişkilendir
+                $invoice = $this->invoiceService->createFromInspection($inspection);
                 $files = $this->uploadFiles(
                     [$request->file('invoice')],
-                    'invoice',  // type olarak 'invoice' belirtiyoruz
+                    'invoice',
                     $inspection->id,
                     'inspection'
                 );
 
-                // İlk dosyayı invoice ile ilişkilendir
                 if ($files->isNotEmpty()) {
                     $invoice->update(['file_id' => $files->first()->id]);
                 }
             }
 
             if ($request->hasFile('admin_files')) {
+                Log::info('Processing admin files upload', [
+                    'request_id' => $requestId,
+                    'inspection_id' => $inspection->id,
+                    'file_count' => count($request->file('admin_files')),
+                ]);
+
                 $this->uploadFiles($request->file('admin_files'), 'admin', $inspection->id, 'inspection');
             }
 
             if ($request->hasFile('customer_files')) {
+                Log::info('Processing customer files upload', [
+                    'request_id' => $requestId,
+                    'inspection_id' => $inspection->id,
+                    'file_count' => count($request->file('customer_files')),
+                ]);
+
                 $this->uploadFiles($request->file('customer_files'), 'customer', $inspection->id, 'inspection');
             }
-
-            return redirect()
-                ->route('tenant.inspections.show', $inspection)
-                ->with('msg', 'Inspectie succesvol aangemaakt');
-            // } catch (ConflictingEventException $e) {
-            //     return redirect()
-            //         ->route('tenant.inspections.create')
-            //         ->withInput($request->all())
-            //         ->withErrors($e->getMessage());
-            // }
         } catch (\Exception $e) {
-            Log::error('InspectionController@store: ' . $e->getMessage());
-            return redirect()
-                ->route('tenant.inspections.create')
-                ->withInput($request->all())
-                ->withErrors('Hata: ' . $e->getMessage());
+            Log::error('File upload failed', [
+                'request_id' => $requestId,
+                'inspection_id' => $inspection->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            throw CustomInspectionException::externalServiceError('File Upload Service', [
+                'inspection_id' => $inspection->id,
+                'original_error' => $e->getMessage(),
+            ]);
         }
+    }
+
+    /**
+     * Get current authentication guard
+     */
+    private function getCurrentGuard(): string
+    {
+        if (auth()->guard('client')->check()) {
+            return 'client';
+        } elseif (auth()->guard('tenant')->check()) {
+            return 'tenant';
+        }
+
+        return 'tenant'; // Default
     }
 
     public function show(Inspection $inspection)
@@ -157,7 +243,9 @@ class InspectionController extends Controller
 
         $inspection->load(['client', 'employee', 'items', 'province']);
         $statuses = Status::all();
-        return view('app.tenant.inspections.show', compact('inspection', 'statuses'));
+
+        $guard = $this->ctx->guard();
+        return view('app.tenant.inspections.show', compact('inspection', 'statuses', 'guard'));
     }
 
     public function edit(Inspection $inspection)
@@ -167,13 +255,21 @@ class InspectionController extends Controller
         $inspection->load(['client', 'employee', 'items', 'items.category', 'combiDiscount']);
         $clients = Client::all();
         $provinces = Province::all();
-        $types = Type::all();
-        return view('app.tenant.inspections.edit', compact('inspection', 'clients', 'provinces', 'types'));
+        $types = Type::where('category_id', 0)
+            ->with(['subTypes' => function ($q) {
+                $q->orderBy('sort_order');
+            }])
+            ->orderBy('sort_order')
+            ->get();
+        
+        $guard = $this->ctx->guard();
+        return view('app.tenant.inspections.edit', compact('inspection', 'clients', 'provinces', 'types', 'guard'));
     }
 
     public function update(UpdateInspectionRequest $request, Inspection $inspection)
     {
         try {
+
             $inspection = $this->updateInspectionAction->execute(
                 $inspection,
                 InspectionData::fromRequest($request)
@@ -209,7 +305,7 @@ class InspectionController extends Controller
             }
 
             return redirect()
-                ->route('tenant.inspections.edit', $inspection)
+                ->route($this->ctx->guard() . '.inspections.edit', $inspection)
                 ->with('msg', 'Inspectie succesvol bijgewerkt');
         } catch (InspectionValidationException $e) {
             return back()->withErrors($e->getErrors());
@@ -225,15 +321,14 @@ class InspectionController extends Controller
         $this->deleteFiles($inspection->id, 'InspectionDocs');
 
         $inspection->delete();
-        return redirect()->route('tenant.inspections.index')
+
+        return redirect()->route($this->ctx->guard() . '.inspections.index')
             ->with('success', 'Inspection deleted successfully');
     }
 
     public function updateStatus(Invoice $invoice)
     {
         try {
-
-            dd($invoice);
             if ($invoice) {
                 $this->invoiceService->updateStatus($invoice, 'Paid');
             }
@@ -246,6 +341,45 @@ class InspectionController extends Controller
                 'message' => 'Er is een fout opgetreden',
                 'error' => $e->getMessage()
             ], 500);
+        }
+    }
+
+    public function removeService($id)
+    {
+        try {
+            // Find the specific InspectionItem by ID
+            $inspectionItem = \App\Domain\Inspections\Models\InspectionItem::findOrFail($id);
+
+            // Security check - ensure user has access to this inspection
+            if (!$inspectionItem->inspection->userHasAccess()) {
+                return response()->json(['message' => 'Unauthorized access'], 403);
+            }
+
+            // Log the deletion for audit purposes
+            Log::info('InspectionItem deleted', [
+                'inspection_item_id' => $inspectionItem->id,
+                'inspection_id' => $inspectionItem->inspection_id,
+                'type_id' => $inspectionItem->type_id,
+                'user_id' => auth()->id(),
+            ]);
+
+            // Delete the specific InspectionItem
+            $inspectionItem->delete();
+
+            return response()->json(['message' => 'Service removed successfully']);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::warning('InspectionItem not found', [
+                'inspection_item_id' => $id,
+                'user_id' => auth()->id(),
+            ]);
+            return response()->json(['message' => 'Service not found'], 404);
+        } catch (\Exception $e) {
+            Log::error('Error removing service', [
+                'inspection_item_id' => $id,
+                'error' => $e->getMessage(),
+                'user_id' => auth()->id(),
+            ]);
+            return response()->json(['message' => 'Error removing service'], 500);
         }
     }
 }

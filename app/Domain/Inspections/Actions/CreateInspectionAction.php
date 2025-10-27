@@ -95,7 +95,19 @@ class CreateInspectionAction
             }
 
             // Event'i tetikle
+            Log::info('Dispatching InspectionCreated event', [
+                'inspection_id' => $inspection->id,
+                'inspection_email' => $inspection->email,
+                'inspection_name' => $inspection->name,
+                'client_id' => $inspection->client_id,
+                'tenant_id' => $inspection->tenant_id
+            ]);
+            
             event(new InspectionCreated($inspection));
+            
+            Log::info('InspectionCreated event dispatched successfully', [
+                'inspection_id' => $inspection->id
+            ]);
 
             return $inspection;
         } catch (InspectionException $e) {

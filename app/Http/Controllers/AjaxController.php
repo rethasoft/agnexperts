@@ -19,9 +19,12 @@ use App\Models\KeuringenDetail;
 
 class AjaxController extends Controller
 {
-    public function getTypesByClient($client)
+    public function getTypesByClient($client_id)
     {
         try {
+
+
+            $client = Client::find($client_id);
             $html = '<option value="0">Selecteren</option>';
 
             // Debug için types verilerini kontrol edelim
@@ -29,14 +32,7 @@ class AjaxController extends Controller
                 ->where('category_id', 0)
                 ->get();
 
-
-            Log::info('Tenant ID: ' . $client->tenant_id);
-            Log::info('Types count: ' . $types->count());
-            Log::info('Types data: ', $types->toArray());
-
             foreach ($types as $type) {
-                Log::info('Processing type: ' . $type->name);
-                Log::info('SubTypes count: ' . $type->subTypes->count());
 
                 if ($type->subTypes->count() > 0) {
                     $html .= '<optgroup label="' . $type->name . '">';
@@ -50,7 +46,6 @@ class AjaxController extends Controller
                         $subType->category_name = $type->short_name;
                         $html .= '<option value="' . $subType->id . '" data-product="' . htmlspecialchars(json_encode($subType)) . '">' . $subType->name . '</option>';
 
-                        Log::info('Added subType: ' . $subType->name);
                     }
                     $html .= '</optgroup>';
                 } else {
@@ -62,7 +57,6 @@ class AjaxController extends Controller
 
                     $html .= '<option value="' . $type->id . '" data-product="' . htmlspecialchars(json_encode($type)) . '">' . $type->name . '</option>';
 
-                    Log::info('Added type: ' . $type->name);
                 }
             }
 

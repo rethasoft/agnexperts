@@ -24,7 +24,7 @@
         {{-- <nav aria-label="breadcrumb" class="bg-light rounded-3 p-3 mb-4">
             <ol class="breadcrumb mb-0">
                 <li class="breadcrumb-item"><a href="#" class="text-decoration-none">Dashboard</a></li>
-                <li class="breadcrumb-item"><a href="{{ route('keuringen.index') }}" class="text-decoration-none">Keuringen</a>
+                <li class="breadcrumb-item"><a href="{{ route('tenant.inspections.index') }}" class="text-decoration-none">Keuringen</a>
                 </li>
                 <li class="breadcrumb-item active" aria-current="page">Bewerken #{{ $inspection->file_id }}</li>
             </ol>
@@ -64,7 +64,7 @@
                                     @if ($inspection->client_id > 0)
                                         <div class="col-md-12">
                                             <label class="form-label">Klanten</label>
-                                            <select name="client_id" class="form-select" required>
+                                            <select id="client-select" name="client_id" class="form-select" required>
                                                 <option value="0" disabled selected>Selecteren</option>
                                                 @foreach ($clients as $client)
                                                     <option value="{{ $client->id }}"
@@ -75,6 +75,14 @@
                                             </select>
                                         </div>
                                     @endif
+                                @endauth
+                                @auth('client')
+                                    <div class="col-md-12">
+                                        <div class="alert alert-info">
+                                            <i class="ri-information-line me-2"></i>
+                                            Deze inspectie is gekoppeld aan uw account. U kunt de gegevens van uw klant bewerken.
+                                        </div>
+                                    </div>
                                 @endauth
                                 <div class="col-md-6">
                                     <label class="form-label">Naam</label>
@@ -149,7 +157,7 @@
                                         <input class="form-check-input" type="checkbox" id="differentBillingAddress"
                                             name="has_billing_address" value="1" data-bs-toggle="collapse"
                                             data-bs-target="#billingAddressSection"
-                                            {{ $inspection->has_billing_address ? 'checked' : '' }}>
+                                            {{ $inspection->has_billing_address == 1 ? 'checked' : '' }}>
                                         <label class="form-check-label" for="differentBillingAddress">
                                             Factuuradres verschilt van bovenstaand adres
                                         </label>
@@ -160,7 +168,7 @@
                     </div>
 
                     <!-- Billing Address Section -->
-                    <div class="collapse {{ isset($inspection->billing_street) ? 'show' : '' }}"
+                    <div class="collapse {{ $inspection->has_billing_address == 1 ? '' : 'show' }}"
                         id="billingAddressSection">
                         <div class="card shadow-sm mb-4">
                             <div class="card-header bg-white py-3">
@@ -210,11 +218,11 @@
                         <div class="card-body">
                             @auth('tenant')
                                 <div class="row g-3">
-                                    <div class="col-auto">
-                                        <label class="form-label">Type keuring</label>
-                                        <select name="type[]" id="types" class="form-select add-to-cart-select" multiple>
+                                    <div class="col-12">
+                                        <label class="form-label required mb-2">Type keuring</label>
+                                        <select name="type" id="types" class="form-select add-to-cart-select">
                                             @if (is_object($types))
-                                                <option value="0" disabled>Selecteren</option>
+                                                <option value="0">Selecteren</option>
                                                 @foreach ($types as $type)
                                                     @if ($type->subTypes->count() > 0)
                                                         <optgroup label="{{ $type->name }}">
@@ -223,7 +231,7 @@
                                                                     $subType->category_name = $type->short_name;
                                                                     $isSelected = in_array(
                                                                         $subType->id,
-                                                                        json_decode($inspection->type ?? '[]'),
+                                                                        $inspection->items->pluck('type_id')->toArray(),
                                                                     );
                                                                 @endphp
                                                                 <option value="{{ $subType->id }}" data-product='@json($subType)'>
@@ -235,7 +243,7 @@
                                                         @php
                                                             $isSelected = in_array(
                                                                 $type->id,
-                                                                json_decode($inspection->type ?? '[]'),
+                                                                $inspection->items->pluck('type_id')->toArray(),
                                                             );
                                                         @endphp
                                                         <option value="{{ $type->id }}" data-product='@json($type)'>
@@ -250,7 +258,7 @@
                                     </div>
                                 </div>
 
-                                <div id="cart" class="mt-4">
+                                <div id="cart" class="mt-4 d-none">
                                     <div class="table-responsive">
                                         <table id="cart-table" class="table table-hover">
                                             <thead class="table-light">
@@ -292,7 +300,7 @@
                                                     </tr>
                                                 </thead>
                                                 <tbody>
-                                                    @foreach ($inspection->details as $detail)
+                                                    @foreach ($inspection->items as $detail)
                                                         <tr>
                                                             <td>{{ $detail->name }}</td>
                                                             <td>{{ $detail->quantity }}</td>
@@ -305,7 +313,7 @@
                                                 <tfoot class="table-light">
                                                     <tr>
                                                         <td colspan="6" class="text-end fw-bold" id="cart-total">
-                                                            Totaal: €{{ $inspection->details->sum('total') }}
+                                                            Totaal: €{{ $inspection->items->sum('total') }}
                                                         </td>
                                                     </tr>
                                                 </tfoot>
@@ -325,81 +333,7 @@
                     @auth('client')
                         <x-client::keuringen-sidebar :inspection="$inspection" />
                     @endauth
-                    {{-- <div class="col-lg-4">
-                    <!-- File Info Section -->
-                    <div class="card shadow-sm mb-4 sticky-top" style="top: 1rem;">
-                        <div class="card-header bg-white py-3">
-                            <h5 class="card-title mb-0">
-                                <i class="ri-folder-line me-2"></i>Dossiergegevens
-                            </h5>
-                        </div>
-                        <div class="card-body">
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label class="form-label">Dossiernummer</label>
-                                    <input type="text" name="data[file_id]" class="form-control"
-                                        value="{{ $inspection->file_id }}" readonly>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Medewerker</label>
-                                    <select name="data[employee_id]" class="form-select">
-                                        <option value="">Selecteren</option>
-                                        @foreach ($employes as $employe)
-                                            <option value="{{ $employe->id }}"
-                                                {{ $inspection->employee_id == $employe->id ? 'selected' : '' }}>
-                                                {{ $employe->name . ' ' . $employe->surname }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Datum plaatsbezoek</label>
-                                    <input type="date" name="data[inspection_date]" class="form-control"
-                                        value="{{ $inspection->inspection_date }}">
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Status</label>
-                                    @if (auth()->user()->type === 'tenant')
-                                        <select name="data[status]" class="form-select" required>
-                                            <option value="">Selecteren</option>
-                                            @foreach ($statuses as $status)
-                                                <option value="{{ $status->id }}"
-                                                    {{ $inspection->status == $status->id ? 'selected' : '' }}>
-                                                    {{ $status->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    @endif
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Factuur uploaden</label>
-                                    <input type="file" name="invoice" class="form-control">
-                                </div>
-                                <div class="col-12">
-                                    <label class="form-label">Certificaat</label>
-                                    @if (auth()->user()->type === 'tenant')
-                                        <input type="file" name="files[]" class="form-control" multiple>
-                                    @endif
-                                </div>
-                                @if (auth()->user()->type === 'client')
-                                    <div class="col-12">
-                                        <label class="form-label">Files</label>
-                                        <input type="file" name="docs[]" class="form-control" multiple>
-                                    </div>
-                                @endif
-                            </div>
-                        </div>
-                        <div class="card-footer bg-white">
-                            <div class="d-flex gap-2 justify-content-end">
-                                <button class="btn btn-success btn-sm px-3 py-2 d-flex align-items-center" type="submit">
-                                    <i class="ri-save-line me-2"></i>
-                                    <span>Opslaan</span>
-                                </button>
-                                <div class="vr"></div>
-                            </div>
-                        </div>
-                    </div>
-                </div> --}}
+                   
                 </div>
             </form>
 
@@ -429,25 +363,31 @@
                         ];
                     }
                 @endphp
-                const existingCombiDiscount = @json($combiDiscountData);
+                const existingCombiDiscount = @json($combiDiscountData ?? null);
 
-                console.log(existingCombiDiscount);
             </script>
             <script>
 $(document).ready(function() {
-    $('#types').select2({
-        placeholder: 'Selecteer diensten',
-        allowClear: true,
-        width: '100%',
-        language: 'nl',
-        closeOnSelect: false
-    });
-    
-    // Mevcut cart verilerini yükle
-    if (typeof existingCartData !== 'undefined' && existingCartData.length > 0) {
-        cart.initializeFromExistingData(existingCartData);
+    // Mevcut cart verilerini, cart.js yüklendikten sonra güvenle yükle
+    function initCartWhenReady(attempts = 0){
+        if (window.cart && typeof cart.initializeFromExistingData === 'function') {
+            if (Array.isArray(existingCartData) && existingCartData.length > 0) {
+                cart.initializeFromExistingData(existingCartData);
+            }
+            // Cart içeriği varsa görünür yap
+            if (cart && Array.isArray(cart.cart) && cart.cart.length > 0) {
+                $('#cart').removeClass('d-none');
+            }
+            return;
+        }
+        if (attempts < 50) { // ~2.5s
+            setTimeout(function(){ initCartWhenReady(attempts + 1); }, 50);
+        }
     }
+    initCartWhenReady();
 });
+
+
             </script>
         @endpush
     @endsection

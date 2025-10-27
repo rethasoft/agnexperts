@@ -52,7 +52,7 @@
                                 @auth('tenant')
                                     <div class="col-md-12">
                                         <label class="form-label">Klanten</label>
-                                        <select name="client_id" class="form-select">
+                                        <select id="client-select" name="client_id" class="form-select">
                                             <option value="0" disabled selected>Selecteren</option>
                                             @foreach ($clients as $client)
                                                 <option value="{{ $client->id }}">{{ $client->name . ' ' . $client->surname }}
@@ -61,25 +61,30 @@
                                         </select>
                                     </div>
                                 @endauth
+                                @auth('client')
+                                    <div class="col-md-12">
+                                        <div class="alert alert-info">
+                                            <i class="ri-information-line me-2"></i>
+                                            Deze inspectie wordt automatisch aan uw account gekoppeld. Vul de gegevens van uw klant in.
+                                        </div>
+                                    </div>
+                                @endauth
                                 <div class="col-md-6">
                                     <label class="form-label required">Naam</label>
-                                    <input type="text" name="name" class="form-control" value="{{ old('name') }}"
-                                        required>
+                                    <input type="text" name="name" class="form-control" value="{{ old('name') }}" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label required">E-mailadres</label>
-                                    <input type="email" name="email" class="form-control" value="{{ old('email') }}"
-                                        required>
+                                    <input type="email" name="email" class="form-control" value="{{ old('email') }}" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label required">Telefoonnummer</label>
-                                    <input type="text" name="phone" class="form-control" value="{{ old('phone') }}"
-                                        required>
+                                    <input type="text" name="phone" class="form-control" value="{{ old('phone') }}" required>
                                 </div>
                                 <div class="col-md-6">
                                     <label class="form-label required">Provincie</label>
                                     <select name="province_id" class="form-select" required>
-                                        <option value="0">Selecteren</option>
+                                        <option value="">Selecteren</option>
                                         @foreach ($provinces as $province)
                                             <option value="{{ $province->id }}"
                                                 {{ old('province_id') == $province->id ? 'selected' : '' }}>
@@ -112,13 +117,12 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label class="form-label required">Straat</label>
-                                    <input type="text" name="street" class="form-control" value="{{ old('street') }}"
-                                        required>
+                                    <input type="text" name="street" class="form-control" value="{{ old('street') }}">
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label required">Nummer</label>
                                     <input type="number" name="number" class="form-control" value="{{ old('number') }}"
-                                        required>
+                                    >
                                 </div>
                                 <div class="col-md-2">
                                     <label class="form-label">Bus</label>
@@ -127,12 +131,12 @@
                                 <div class="col-md-2">
                                     <label class="form-label required">Postcode</label>
                                     <input type="text" name="postal_code" class="form-control"
-                                        value="{{ old('postal_code') }}" required>
+                                        value="{{ old('postal_code') }}">
                                 </div>
                                 <div class="col-12">
                                     <label class="form-label required">Gemeente</label>
                                     <input type="text" name="city" class="form-control"
-                                        value="{{ old('city') }}" required>
+                                        value="{{ old('city') }}">
                                 </div>
 
                                 <!-- Billing Address Toggle -->
@@ -141,7 +145,7 @@
                                         <input type="hidden" name="has_billing_address" value="0">
                                         <input class="form-check-input" type="checkbox" id="differentBillingAddress"
                                             name="has_billing_address" value="1" data-bs-toggle="collapse"
-                                            data-bs-target="#billingAddressSection">
+                                            data-bs-target="#billingAddressSection" checked>
                                         <label class="form-check-label" for="differentBillingAddress">
                                             Factuuradres verschilt van bovenstaand adres
                                         </label>
@@ -200,11 +204,11 @@
                         </div>
                         <div class="card-body">
                             <div class="row g-3">
-                                <div class="col-md-8">
-                                    <label class="form-label required">Type keuring</label>
-                                    <select name="type[]" id="types" class="form-select add-to-cart-select" multiple>
+                                <div class="col-12">
+                                    <label class="form-label required mb-2">Type keuring</label>
+                                    <select name="type" id="types" class="form-select add-to-cart-select">
                                         @if (is_object($types))
-                                            <option value="0" disabled>Selecteren</option>
+                                            <option value="0">Selecteren</option>
                                             @foreach ($types as $type)
                                                 @if ($type->subTypes->count() > 0)
                                                     <optgroup label="{{ $type->name }}">
@@ -213,7 +217,7 @@
                                                                 $subType->category_name = $type->short_name;
                                                             @endphp
                                                             <option value="{{ $subType->id }}" data-product='@json($subType)'>
-                                                                {{ $type->name . ' > ' . $subType->name }}
+                                                               {{ $subType->name }}
                                                             </option>
                                                         @endforeach
                                                     </optgroup>
@@ -271,18 +275,104 @@
             </div>
         </form>
     </div>
+
+    @push('scripts')
+    <script>
+    // Billing address checkbox functionality
+    document.addEventListener('DOMContentLoaded', function() {
+        const billingCheckbox = document.getElementById('differentBillingAddress');
+        const billingInputs = [
+            'billing_street',
+            'billing_number', 
+            'billing_postal_code',
+            'billing_city'
+        ];
+
+        function checkBillingFieldsFilled() {
+            // Check if any billing field has a value
+            const hasBillingData = billingInputs.some(inputName => {
+                const input = document.querySelector(`input[name="${inputName}"]`);
+                return input && input.value.trim() !== '';
+            });
+            
+            return hasBillingData;
+        }
+
+        function toggleBillingRequired() {
+            const isChecked = billingCheckbox.checked;
+            
+            billingInputs.forEach(inputName => {
+                const input = document.querySelector(`input[name="${inputName}"]`);
+                const label = document.querySelector(`label[for="${inputName}"]`) || 
+                             input?.closest('.col-md-6, .col-md-2, .col-12')?.querySelector('label');
+                
+                if (input) {
+                    if (isChecked) {
+                        input.setAttribute('required', 'required');
+                        input.classList.add('required-field');
+                        if (label) {
+                            label.classList.add('required');
+                            if (!label.innerHTML.includes('*')) {
+                                label.innerHTML = label.innerHTML + ' <span class="text-danger">*</span>';
+                            }
+                        }
+                    } else {
+                        input.removeAttribute('required');
+                        input.classList.remove('required-field');
+                        if (label) {
+                            label.classList.remove('required');
+                            label.innerHTML = label.innerHTML.replace(' <span class="text-danger">*</span>', '');
+                        }
+                    }
+                }
+            });
+        }
+
+        // Initial state - don't change checkbox based on data, just set up required fields
+        // toggleBillingRequired();
+
+        // Listen for checkbox changes
+        billingCheckbox.addEventListener('change', function() {
+            // Update hidden input value
+            const hiddenInput = document.querySelector('input[name="has_billing_address"][type="hidden"]');
+            if (hiddenInput) {
+                hiddenInput.value = billingCheckbox.checked ? '1' : '0';
+            }
+            
+            // Update section visibility based on checkbox
+            const billingSection = document.getElementById('billingAddressSection');
+            if (billingSection) {
+                if (billingCheckbox.checked) {
+                    billingSection.classList.add('show');
+                } else {
+                    billingSection.classList.remove('show');
+                }
+            }
+            
+            // Update required fields
+            toggleBillingRequired();
+        });
+        
+        // Listen for input changes to auto-update checkbox only when user types
+        billingInputs.forEach(inputName => {
+            const input = document.querySelector(`input[name="${inputName}"]`);
+            if (input) {
+                input.addEventListener('input', function() {
+                    // Only update checkbox if user is actively typing
+                    const hasData = checkBillingFieldsFilled();
+                    if (hasData && !billingCheckbox.checked) {
+                        billingCheckbox.checked = true;
+                        const hiddenInput = document.querySelector('input[name="has_billing_address"][type="hidden"]');
+                        if (hiddenInput) {
+                            hiddenInput.value = '1';
+                        }
+                    }
+                    toggleBillingRequired();
+                });
+            }
+        });
+    });
+    </script>
+    @endpush
 @endsection
 
-@push('scripts')
-<script>
-$(document).ready(function() {
-    $('#types').select2({
-        placeholder: 'Selecteer diensten',
-        allowClear: true,
-        width: '100%',
-        language: 'nl',
-        closeOnSelect: false
-    });
-});
-</script>
-@endpush

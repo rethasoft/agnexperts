@@ -29,6 +29,7 @@
                 <div class="col-12">
                     <label class="form-label">Datum plaatsbezoek</label>
                     <input type="date" name="inspection_date" class="form-control" required
+                        min="{{ now()->toDateString() }}"
                         value="{{ $isEdit && $inspection->inspection_date ? \Carbon\Carbon::parse($inspection->inspection_date)->format('Y-m-d') : '' }}">
                 </div>
                 <div class="col-12">

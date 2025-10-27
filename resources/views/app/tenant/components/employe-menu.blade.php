@@ -1,6 +1,6 @@
 <ul>
     @can('read_keuringen')
-        <li><a href="{{ route('keuringen.index') }}" class="{{ Request::is('keuringen') ? 'active' : '' }}"><i
+        <li><a href="{{ route('tenant.inspections.index') }}" class="{{ Request::is('inspections') ? 'active' : '' }}"><i
                     class="ri-file-text-line"></i>{{ __('Keuringen') }}</a></li>
     @endcan
     @can('read_status')

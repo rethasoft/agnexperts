@@ -73,15 +73,27 @@ class InspectionData
             throw new DomainException('Tenant ID could not be retrieved');
         }
 
-        $source = $request->is('api/*') 
-            ? InspectionSource::API 
-            : (auth()->check() 
-                ? InspectionSource::ADMIN_PANEL 
+        // Client için client_id'yi otomatik set et
+        $clientId = $request->client_id;
+        if (auth()->guard('client')->check()) {
+            $clientId = auth()->user()->id;
+        }
+
+        // Client için inspection_date'i null yap (tenant/employee atayacak)
+        $inspectionDate = $request->inspection_date;
+        if (auth()->guard('client')->check()) {
+            $inspectionDate = null;
+        }
+
+        $source = $request->is('api/*')
+             ? InspectionSource::API
+            : (auth()->check()
+                 ? InspectionSource::ADMIN_PANEL
                 : InspectionSource::WEBSITE);
 
         return new self(
             tenant_id: $tenantId,
-            client_id: $request->client_id,
+            client_id: $clientId,
             employee_id: $request->employee_id,
             name: $request->name,
             email: $request->email,
@@ -107,7 +119,7 @@ class InspectionData
             subtotal: $request->subtotal ?? 0,
             paid: $request->paid ?? false,
             payment_status: $request->payment_status ?? 'pending',
-            inspection_date: $request->inspection_date,
+            inspection_date: $inspectionDate,
             text: $request->text,
             status_id: $request->status_id ?? 0,
             items: $items,

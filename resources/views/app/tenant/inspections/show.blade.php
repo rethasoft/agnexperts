@@ -197,14 +197,14 @@
                                 </div>
 
                                 <!-- Billing Address Toggle -->
-                                @if ($inspection->has_billing_address)
+                                @if ($inspection->has_billing_address == 1)
                                     <div class="col-12 mt-4">
                                         <div class="form-check">
                                             <input type="hidden" name="has_billing_address" value="0">
                                             <input class="form-check-input" type="checkbox" id="differentBillingAddress"
                                                 name="has_billing_address" value="1" data-bs-toggle="collapse"
                                                 data-bs-target="#billingAddressSection"
-                                                {{ $inspection->has_billing_address ? 'checked' : '' }}>
+                                                {{ $inspection->has_billing_address == 1 ? 'checked' : '' }}>
                                             <label class="form-check-label" for="differentBillingAddress">
                                                 Factuuradres verschilt van bovenstaand adres
                                             </label>
@@ -218,7 +218,7 @@
                 </div>
 
                 <!-- Billing Address Section -->
-                @if ($inspection->has_billing_address)
+                @if ($inspection->has_billing_address == 1)
                     <div class="collapse show" id="billingAddressSection">
                         <div class="card shadow-sm mb-4">
                             <div class="card-header bg-white py-3">

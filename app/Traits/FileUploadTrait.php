@@ -24,8 +24,9 @@ trait FileUploadTrait
                     $file->hashName()
                 );
 
-                // Dosyayı storage'a kaydet
-                Storage::put($path, file_get_contents($file));
+                // Dosyayı storage'a (private/local) kaydet
+                // Not: local disk -> storage/app altında saklanır, web'den direkt erişilemez
+                Storage::put($path, file_get_contents($file->getRealPath()));
 
                 // Veritabanına kaydet
                 $uploadedFiles->push(File::create([
@@ -33,6 +34,7 @@ trait FileUploadTrait
                     'fileable_type' => $morphType,
                     'name' => $file->getClientOriginalName(),
                     'path' => $path,
+                    'disk' => 'local',
                     'mime_type' => $file->getMimeType(),
                     'size' => $file->getSize(),
                     'metadata' => [
@@ -53,7 +55,8 @@ trait FileUploadTrait
             ->get();
 
         foreach ($files as $file) {
-            Storage::disk('public')->delete($file->path);
+            // Aynı disk kullanımı: local
+            Storage::delete($file->path);
             $file->delete();
         }
     }
